@@ -1,0 +1,132 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id            String    @id @default(uuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  password      String?   // Keep optional for OAuth users
+  role          String    @default("creator") // "admin" or "creator"
+  niche         String?
+  plan          String    @default("free")
+  credits       Int       @default(10)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // NextAuth Relations
+  accounts      Account[]
+  sessions      Session[]
+  
+  // Custom Relations
+  posts          Post[]
+  aiReports      AIReport[]
+  communityPosts CommunityPost[]
+  channelStats   ChannelStats[]
+
+  // Legacy/Simple Social Connection Fields (Optional: Can keep for backward compat or migrate)
+  youtubeChannelId String?
+  youtubeHandle    String?
+  youtubeStats     String? // JSON String
+  instagramId      String?
+  instagramHandle  String?
+  instagramStats   String? // JSON String
+}
+
+// NextAuth Models
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// Deep Analytics Models
+model ChannelStats {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  platform  String   // "youtube" or "instagram"
+  
+  // Core Metrics
+  followers Int
+  views     Int
+  engagementRate Float?
+  
+  // Snapshots (Historical Data)
+  date      DateTime @default(now())
+  
+  // Detailed JSON for flexibility (videos list, top posts, etc)
+  rawData   String? // JSON string
+}
+
+model Post {
+  id            String    @id @default(uuid())
+  title         String
+  content       String?
+  platform      String
+  status        String    @default("draft") // "draft", "scheduled", "published"
+  scheduledDate DateTime?
+  userId        String
+  user          User      @relation(fields: [userId], references: [id])
+  createdAt     DateTime  @default(now())
+}
+
+model AIReport {
+  id        String   @id @default(uuid())
+  type      String   // "hook", "caption", "script", "analysis"
+  content   String   // JSON string or text result
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+model CommunityPost {
+  id        String   @id @default(uuid())
+  content   String
+  likes     Int      @default(0)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+}
