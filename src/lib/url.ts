@@ -1,7 +1,5 @@
 export const getBaseUrl = () => {
-    if (process.env.NODE_ENV === "production") {
-        return "https://creatoros.app";
-    }
-    // Allow override via NEXTAUTH_URL (e.g. ngrok), otherwise localhost
-    return process.env.NEXTAUTH_URL || "http://localhost:3000";
+    if (process.env.NEXTAUTH_URL) return process.env.NEXTAUTH_URL;
+    if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
+    return "http://localhost:3000";
 };
