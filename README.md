@@ -1,139 +1,71 @@
-# 🚀 CreatorOS - AI-Powered SaaS Platform
+# CreatorOS - The Ultimate Operating System for Content Creators
 
-**CreatorOS** is a comprehensive, production-grade SaaS dashboard designed for content creators. It acts as an "AI Doctor + Growth Coach + Business Manager," providing tools for content generation, analytics, social media integration, and community engagement.
+CreatorOS is a powerful, AI-driven platform designed to supercharge your content creation workflow. Manage your YouTube and Instagram presence, generate content ideas, analyze performance, and engage with your community—all in one place.
 
-Built with **Next.js 14 (App Router)**, **TypeScript**, and a **Premium Dark Glass UI**, this project demonstrates a scalable architecture ready for real-world deployment.
+![CreatorOS Dashboard](https://your-screenshot-url.com/dashboard.png)
 
----
+## 🚀 Key Features
 
-## ✨ Key Features Implemented
+*   **Unified Dashboard**: View real-time analytics from YouTube and Instagram in a single, beautiful interface.
+*   **AI Content Studio**: Generate scripts, captions, hashtags, and thumbnails using advanced AI (Gemini & DALL-E).
+*   **Smart Analytics**: Get deep insights into your audience, engagement rates, and growth trends.
+*   **Multi-Platform Posting**: Schedule and manage posts for YouTube Shorts and Instagram Reels.
+*   **Community Management**: engage with your audience through a unified inbox and community feed.
+*   **Secure Authentication**: Seamlessly connect your social accounts with robust OAuth integration.
 
-### 🔐 Authentication & Security
-- **Secure Signup/Login**: Custom JWT-based authentication flow.
-- **Session Management**: HTTP-only, secure cookies for persistent sessions.
-- **Role-Based Access Control (RBAC)**: Distinct protection for `Creator` and `Admin` routes.
-- **Middleware Protection**: Unauthenticated users are redirected from protected pages.
+## 🛠️ Built With
 
-### 🎨 Creator Dashboard
-The core workspace for users, featuring:
-1.  **🏠 Home**: 
-    - Real-time "Creator Score" and "Viral Prediction" stats.
-    - **AI Coach Widget**: Provides personalized growth tips.
-    - Interactive Engagement Chart (Recharts).
-2.  **🤖 AI Studio**:
-    - **Multi-Language Support**: Generate content in **English** and **Telugu**.
-    - **Modes**: Viral Hooks, Captions, Scripts, and Storytelling.
-    - **Simulation**: Realistic typing effects and API latency simulation.
-3.  **🔗 Social Connect Hub**:
-    - Bind **YouTube** and **Instagram** accounts.
-    - View mock live stats (Subscribers, Views, Impressions).
-    - Toggle connection states with visual feedback.
-4.  **📊 Analytics Lab**:
-    - Deep dive into engagement trends and growth metrics.
-    - Visual graphs for performance tracking.
-5.  **📅 Content Planner**:
-    - Calendar view to schedule and organize upcoming posts.
-6.  **📢 Community Feed**:
-    - Real-time social feed to interact with other creators.
-    - Like and Post functionality.
+*   **Framework**: [Next.js 14](https://nextjs.org/) (App Router)
+*   **Database**: [Prisma](https://www.prisma.io/) (SQLite for Dev, Postgres for Prod)
+*   **Authentication**: [NextAuth.js v5](https://authjs.dev/)
+*   **AI**: Google Gemini Pro & OpenAI
+*   **Styling**: TailwindCSS & Framer Motion
 
-### 🛡️ Admin Dashboard
-A dedicated portal for platform management:
-1.  **Overview**: High-level metrics (Total Users, MRR, AI Requests).
-2.  **User Management**: View user database, roles, and plan details.
-3.  **System Reports**: Analysis of subscription distribution and server health.
-4.  **Global Settings**: Toggle public signups, manage API keys (UI).
+## 📦 Getting Started
 
-### 💎 Desgin System: "Dark Glass"
-- **Aesthetic**: Deep space background with animated mesh gradients.
-- **Glassmorphism**: Translucent cards (`backdrop-filter: blur`) with subtle borders.
-- **Animations**: Smooth hover lifts, glowing neon accents, and fluid transitions.
-- **Typography**: Integrated `Inter` font for clean, professional readability.
-- **Responsive**: Sidebar navigation adapts to screen size.
+### Prerequisites
 
----
+*   Node.js 18+
+*   NPM or Yarn
+*   Git
 
-## 🛠 Tech Stack
+### Installation
 
-- **Framework**: [Next.js 14](https://nextjs.org/) (App Router)
-- **Language**: TypeScript
-- **Database**: SQLite (via Prisma ORM)
-- **Styling**: Vanilla CSS Modules with CSS Variables (No Tailwind dependency)
-- **Icons**: Lucide React
-- **Charts**: Recharts
-- **Auth**: `jsonwebtoken`, `bcryptjs`, `cookie`
+1.  **Clone the repository:**
+    ```bash
+    git clone https://github.com/Dhanushkotichukka/CreatorOS.git
+    cd CreatorOS
+    ```
 
----
+2.  **Install dependencies:**
+    ```bash
+    npm install
+    ```
 
-## 📂 Project Structure
+3.  **Set up Environment Variables:**
+    Copy `.env.example` to `.env.local` and fill in your API keys (Gemini, YouTube, Meta, etc.).
 
-```bash
-/src
-├── app/
-│   ├── (auth)/             # Login & Signup routes (Public)
-│   ├── (dashboard)/        # Protected application routes
-│   │   ├── admin/          # Admin-only pages
-│   │   ├── creator/        # Creator feature pages
-│   │   └── layout.tsx      # Dashboard shell (Sidebar + Header)
-│   ├── api/                # Backend API Routes
-│   │   ├── auth/           # Login, Signup, Logout, Session
-│   │   ├── ai/             # Content generation endpoints
-│   │   └── connect/        # Social media integration endpoints
-│   └── globals.css         # Global styles & Theme variables
-├── components/
-│   └── layout/             # Sidebar, Header, etc.
-├── lib/
-│   ├── auth.ts             # Auth utilities (Hash, Sign, Verify)
-│   └── prisma.ts           # DB Client instance
-└── context/
-    └── AuthContext.tsx     # Global Auth State Provider
-```
+4.  **Run the development server:**
+    ```bash
+    npm run dev
+    ```
 
----
+## 🚀 Deployment (Vercel)
 
-## 🚀 Getting Started
+This project is optimized for deployment on [Vercel](https://vercel.com).
 
-### 1. Prerequisites
-- Node.js 18+ installed.
+1.  **Push to GitHub**: Ensure your code is up-to-date on GitHub.
+2.  **Import to Vercel**: Go to Vercel, click "New Project", and select your repo.
+3.  **Configure Environment Variables**: Add all your API keys from `.env.local` to Vercel.
+    *   **Important**: Do NOT add `DATABASE_URL` manually.
+4.  **Connect Database**: In Vercel, go to **Storage** -> **Create Postgres**. Vercel will automatically handle the connection string.
+5.  **Deploy**: Click "Deploy".
+6.  **Finalize URL**: Once deployed, get your domain (e.g., `https://creatoros.vercel.app`) and update the `NEXTAUTH_URL` environment variable in Vercel settings. Redeploy for it to take effect.
 
-### 2. Installation
-```bash
-# Install dependencies
-npm install
-```
+## 🤝 Contributing
 
-### 3. Database Setup
-Initialize the local SQLite database:
-```bash
-npx prisma db push
-```
+Contributions are welcome! Please feel free to submit a Pull Request.
 
-### 4. Run Development Server
-```bash
-npm run dev
-```
-Visit `http://localhost:3000` to view the app.
+## 📄 License
 
----
-
-## 🧪 API Endpoints
-
-| Method | Endpoint | Description |
-| :--- | :--- | :--- |
-| `POST` | `/api/auth/signup` | Register a new user |
-| `POST` | `/api/auth/login` | Authenticate user & set cookie |
-| `GET` | `/api/auth/me` | Get current session/user |
-| `POST` | `/api/ai/generate` | Generate generic content |
-| `POST` | `/api/ai/story` | Generate stories (supports Telugu) |
-| `POST` | `/api/connect` | Link Social Accounts (YouTube/IG) |
-
----
-
-## 🔮 Future Roadmap (Next Steps)
-- Integration with real OpenAI API.
-- Live YouTube/Instagram API connection.
-- Stripe Payment integration for "Pro" plans.
-- Image generation capabilities.
-
----
-**Built for the future of content creation.**
+This project is licensed under the MIT License.
