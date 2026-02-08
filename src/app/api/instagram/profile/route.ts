@@ -50,12 +50,6 @@ export async function GET() {
         console.error('Instagram Profile Error:', error);
 
         // Return realistic mock data
-        return NextResponse.json({
-            username: session.user.name?.replace(/\s/g, '').toLowerCase() || 'creator_os',
-            profile_picture_url: session.user.image || '',
-            followers: 12500,
-            media_count: 48,
-            biography: 'Content Creator | Tech Enthusiast | Powered by CreatorOS 🚀'
-        });
+        return NextResponse.json({ error: 'Failed to fetch Instagram profile' }, { status: 500 });
     }
 }

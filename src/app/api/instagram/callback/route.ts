@@ -91,6 +91,7 @@ export async function GET(req: Request) {
                 },
             },
             update: {
+                userId: session.user.id, // Transfer ownership to current user
                 access_token: accessToken,
                 refresh_token: accessToken, // Graph API tokens are long-lived, simplified here
                 expires_at: Math.floor(Date.now() / 1000) + (60 * 60 * 24 * 60), // approx 60 days
