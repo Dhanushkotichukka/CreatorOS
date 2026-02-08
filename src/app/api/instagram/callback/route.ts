@@ -24,7 +24,7 @@ export async function GET(req: Request) {
         const baseUrl = getBaseUrl().replace(/\/$/, '');
         const redirectUri = `${baseUrl}/api/instagram/callback`;
 
-        const tokenRes = await fetch(`https://graph.facebook.com/v18.0/oauth/access_token?client_id=${appId}&redirect_uri=${redirectUri}&client_secret=${appSecret}&code=${code}`);
+        const tokenRes = await fetch(`https://graph.facebook.com/v19.0/oauth/access_token?client_id=${appId}&redirect_uri=${redirectUri}&client_secret=${appSecret}&code=${code}`);
         const tokenData = await tokenRes.json();
 
         if (tokenData.error) {
@@ -36,7 +36,7 @@ export async function GET(req: Request) {
         // 2. Identify the Instagram Business Account (Handle Pagination)
 
         let pageWithIg = null;
-        let url: string | null = `https://graph.facebook.com/v18.0/me/accounts?fields=name,instagram_business_account{id,username,profile_picture_url}&access_token=${accessToken}&limit=100`;
+        let url: string | null = `https://graph.facebook.com/v19.0/me/accounts?fields=name,instagram_business_account{id,username,profile_picture_url}&access_token=${accessToken}&limit=100`;
 
         let allPageNames: string[] = [];
         let totalPagesFound = 0;
@@ -70,7 +70,7 @@ export async function GET(req: Request) {
             console.error('No Instagram Business Account found across all pages.');
 
             // Debug: Check what permissions we actually got
-            const permRes = await fetch(`https://graph.facebook.com/v18.0/me/permissions?access_token=${accessToken}`);
+            const permRes = await fetch(`https://graph.facebook.com/v19.0/me/permissions?access_token=${accessToken}`);
             const permData = await permRes.json();
             const granted = permData.data?.filter((p: any) => p.status === 'granted').map((p: any) => p.permission).join(', ') || 'None';
 
