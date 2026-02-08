@@ -61,7 +61,9 @@ export async function GET(req: Request) {
 
         if (!pageWithIg) {
             console.error('No Instagram Business Account found across all pages.');
-            return NextResponse.redirect(new URL('/creator/connect?error=no_instagram_business_account', req.url));
+            const pageNames = accountsData.data?.map((p: any) => p.name).join(', ') || 'None';
+            const debugInfo = encodeURIComponent(`Found ${accountsData.data?.length || 0} pages: ${pageNames}. None had 'instagram_business_account' field.`);
+            return NextResponse.redirect(new URL(`/creator/connect?error=no_instagram_business_account&debug=${debugInfo}`, req.url));
         }
 
         const igUserId = pageWithIg.instagram_business_account.id;

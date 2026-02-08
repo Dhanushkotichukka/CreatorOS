@@ -70,14 +70,20 @@ export default function Connect() {
       </header>
 
       {errorParam && (
-          <div className="glass-panel" style={{ padding: '1rem', marginBottom: '2rem', border: '1px solid #ef4444', background: 'rgba(239, 68, 68, 0.1)', color: '#fca5a5', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <AlertCircle size={20} />
-              <span>
-                  {errorParam === 'no_instagram_business_account' 
-                    ? "We couldn't find an Instagram Business account linked to your Facebook page. Please make sure you have converted your Instagram to a Business/Creator account and linked it to a Facebook Page." 
-                    : "An error occurred while connecting. Please try again."}
-              </span>
-          </div>
+        <div style={{ padding: '1rem', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)', borderRadius: '0.75rem', marginBottom: '2rem', display: 'flex', alignItems: 'start', gap: '0.75rem', color: '#fca5a5' }}>
+            <AlertCircle size={20} style={{ flexShrink: 0, marginTop: '2px' }} />
+            <div>
+                <p style={{ fontWeight: 600, marginBottom: '0.25rem' }}>Connection Failed</p>
+                <p style={{ fontSize: '0.9rem', opacity: 0.9 }}>
+                    {getErrorMessage(errorParam)}
+                </p>
+                {searchParams.get('debug') && (
+                    <div style={{ marginTop: '0.5rem', padding: '0.5rem', background: 'rgba(0,0,0,0.3)', borderRadius: '4px', fontSize: '0.75rem', fontFamily: 'monospace' }}>
+                        <strong>Debug Info:</strong> {decodeURIComponent(searchParams.get('debug')!)}
+                    </div>
+                )}
+            </div>
+        </div>
       )}
 
       <div style={{ display: 'grid', gap: '2rem' }}>
