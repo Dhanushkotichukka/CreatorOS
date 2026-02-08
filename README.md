@@ -4,7 +4,13 @@ CreatorOS is a powerful, AI-driven platform designed to supercharge your content
 
 ![CreatorOS Dashboard](https://your-screenshot-url.com/dashboard.png)
 
-## 🚀 Key Features
+## 🚀 Key Features (v2.0 - Creator Intelligence Upgrade)
+
+*   **Real Instagram Integration**: Connect your business account via OAuth. View deeper analytics (Reach, Impressions).
+*   **Engagement Health Score**: A unified metric (0-100) combining consistency and growth across platforms.
+*   **AI Improvement Agent**: Get actionable advice to fix low engagement on specific videos.
+*   **Community Hub**: Create groups, join discussions, and network with other creators.
+*   **Dark Glass UI**: A premium, responsive interface for modern creators.
 
 *   **Unified Dashboard**: View real-time analytics from YouTube and Instagram in a single, beautiful interface.
 *   **AI Content Studio**: Generate scripts, captions, hashtags, and thumbnails using advanced AI (Gemini & DALL-E).
