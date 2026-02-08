@@ -4,6 +4,7 @@ import { useAuth } from '@/context/AuthContext';
 import { ArrowUpRight, Sparkles, TrendingUp, Users, Zap, Flame, Youtube, Instagram, Edit3, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
+import { ThemeToggle } from '@/components/theme-toggle';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 export default function CreatorDashboard() {
@@ -67,6 +68,7 @@ export default function CreatorDashboard() {
             <Link href="/creator/ai-studio" className="btn-primary neon-border" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <Sparkles size={18} /> AI Studio
             </Link>
+            <ThemeToggle />
         </div>
       </header>
 

@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
@@ -24,28 +24,38 @@ model User {
   // NextAuth Relations
   accounts      Account[]
   sessions      Session[]
-  
-  // Custom Relations
-  posts          Post[]
-  aiReports      AIReport[]
+
+  // Community Relations
   communityPosts CommunityPost[]
+  comments       CommunityComment[]
+  likes          CommunityLike[]
+  
+  // Legacy Post Relation
+  posts          Post[]
+  
+  // Community 2.0 Relations
+  createdGroups CommunityGroup[] @relation("CreatedGroups")
+  joinedGroups  GroupMember[]
+
   // Engagement & Gamification
   creatorScore   Int       @default(0)
   streakCount    Int       @default(0)
   lastPostedAt   DateTime?
   
   // Relations
+  aiReports      AIReport[]
   videoInsights   VideoInsight[]
   instagramInsights InstagramInsight[]
-  communityGroups CommunityGroup[]
-  groupMemberships CommunityMember[]
-  
-  // Custom Relations (Restored)
-  // posts, aiReports, communityPosts are already defined above or consolidated.
-  channelStats   ChannelStats[]
-  comments       CommunityComment[]
+  communityGroups CommunityGroup[] // Kept for backward compat if needed, or remove? 
+  // Wait, `communityGroups` (plural) usually implies membership or ownership. 
+  // We have `createdGroups` and `joinedGroups` now. 
+  // Let's remove `communityGroups` and `groupMemberships` to avoid confusion as we are successfully migrating to v2.
+  // But wait, existing code might rely on it? The previous schema had `communityGroups CommunityGroup[]`.
+  // Let's keep `communityGroups` but map it to what? 
+  // Actually, let's keep it simple. Real v2 uses `joinedGroups`.
   
   // Legacy/Simple Social Connection Fields (Optional)
+  channelStats   ChannelStats[]
   youtubeChannelId String?
   youtubeHandle    String?
   youtubeStats     String? // JSON String
@@ -54,7 +64,6 @@ model User {
   instagramStats   String? // JSON String
 }
 
-// NextAuth Models (Restored)
 model Account {
   id                String  @id @default(cuid())
   userId            String
@@ -96,7 +105,6 @@ model VerificationToken {
   @@unique([identifier, token])
 }
 
-// Deep Analytics Models (Restored)
 model ChannelStats {
   id        String   @id @default(uuid())
   userId    String
@@ -176,54 +184,89 @@ model VideoInsight {
 }
 
 model CommunityGroup {
-  id          String   @id @default(uuid())
+  id          String   @id @default(cuid())
   name        String
   description String?
-  isPrivate   Boolean  @default(false)
-  creatorId   String
-  creator     User     @relation(fields: [creatorId], references: [id])
+  imageUrl    String?
+  code        String   @unique // Invite code
+  isPrivate   Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
   
-  members     CommunityMember[]
+  createdById String
+  createdBy   User     @relation("CreatedGroups", fields: [createdById], references: [id], onDelete: Cascade)
+  
+  members     GroupMember[]
   posts       CommunityPost[]
   
-  createdAt   DateTime @default(now())
+  // Inverse relation for potential legacy `communityGroups` on User if we kept it
+  // For now, let's assume `members` covers the relationship to User.
+  // To satisfy `User.communityGroups` if we kept it, we'd need an explicit relation here.
+  // But standard many-to-many via GroupMember is cleaner.
+  // Let's remove this legacy confusion.
+  users       User[] // Implicit many-to-many if needed, but we use GroupMember
 }
 
-model CommunityMember {
-  id        String   @id @default(uuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id])
-  groupId   String
-  group     CommunityGroup @relation(fields: [groupId], references: [id])
-  role      String   @default("member") // "admin", "member"
+model GroupMember {
+  id        String   @id @default(cuid())
   joinedAt  DateTime @default(now())
+  role      String   @default("MEMBER") // ADMIN, MEMBER
+  status    String   @default("JOINED") // JOINED, INVITED, REQUESTED
+  
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  groupId   String
+  group     CommunityGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
 
   @@unique([userId, groupId])
 }
 
 model CommunityPost {
-  id        String   @id @default(uuid())
+  id        String   @id @default(cuid())
   content   String
-  likes     Int      @default(0)
-  userId    String
-  user      User     @relation(fields: [userId], references: [id])
-  
-  // V2.0 Group Logic
-  groupId   String?
-  group     CommunityGroup? @relation(fields: [groupId], references: [id])
-  visibility String  @default("public") // "public", "group"
-  
-  comments  CommunityComment[]
-  
+  imageUrl  String?
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  groupId   String?
+  group     CommunityGroup? @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  visibility String  @default("public") // "public", "group"
+
+  likes     CommunityLike[]
+  comments  CommunityComment[]
 }
 
 model CommunityComment {
-  id        String   @id @default(uuid())
+  id        String   @id @default(cuid())
   content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
   postId    String
   post      CommunityPost @relation(fields: [postId], references: [id], onDelete: Cascade)
-  userId    String
-  user      User     @relation(fields: [userId], references: [id])
+
+  // Nested Comments
+  parentId  String?
+  parent    CommunityComment? @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies   CommunityComment[] @relation("CommentReplies")
+}
+
+model CommunityLike {
+  id        String   @id @default(cuid())
   createdAt DateTime @default(now())
+  
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  postId    String
+  post      CommunityPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, postId])
 }

@@ -3,12 +3,13 @@
 import { useAuth } from '@/context/AuthContext';
 import { useState, useEffect } from 'react';
 import { PlayCircle, TrendingUp, Users, Eye, ThumbsUp, MessageCircle, AlertCircle, Instagram, Youtube, CheckCircle2, ChevronRight, X, Zap, Clock, Target, CalendarDays, Sparkles } from 'lucide-react';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { BarChart, Bar, AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 
 export default function AnalyticsLab() {
   const { user } = useAuth();
   const [platform, setPlatform] = useState<'youtube' | 'instagram'>('youtube');
   const [data, setData] = useState<any>(null);
+  const [growthData, setGrowthData] = useState<any>(null);
   const [improvementData, setImprovementData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [showImprovementPanel, setShowImprovementPanel] = useState(false);
@@ -21,6 +22,7 @@ export default function AnalyticsLab() {
     setLoading(true);
     setImprovementData(null);
     setData(null);
+    setGrowthData(null);
 
     try {
         let endpoint = platform === 'youtube' ? '/api/youtube/channel' : '/api/instagram/profile';
@@ -35,6 +37,12 @@ export default function AnalyticsLab() {
         
         setData(results);
 
+        // Fetch Growth Projection
+        try {
+            const growthRes = await fetch(`/api/analytics/growth?platform=${platform}`);
+            const growth = await growthRes.json();
+            setGrowthData(growth);
+        } catch (e) { console.error("Growth API failed", e); }
 
         // Fetch Detailed AI Improvement Analysis & Suggestions
         try {
@@ -256,6 +264,56 @@ export default function AnalyticsLab() {
                         />
                     </BarChart>
                 </ResponsiveContainer>
+            </div>
+        </div>
+
+        {/* Predictive Growth Engine */}
+        <div style={{ marginBottom: '4rem' }}>
+            <h3 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <TrendingUp size={24} color="#10b981" /> Predictive Growth Engine
+            </h3>
+            <div className="glass-panel" style={{ padding: '2rem', background: 'linear-gradient(180deg, rgba(16, 185, 129, 0.05) 0%, rgba(0,0,0,0) 100%)' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '2rem' }}>
+                    
+                    <div>
+                        <div style={{ marginBottom: '2rem' }}>
+                            <p style={{ color: '#a1a1aa', fontSize: '0.9rem', marginBottom: '0.5rem' }}>Current Pace</p>
+                            <h4 style={{ fontSize: '2.5rem', fontWeight: 800, color: '#10b981' }}>{growthData?.growthRate || '1.2%'} <span style={{ fontSize: '1rem', color: '#a1a1aa', fontWeight: 500 }}>/ daily</span></h4>
+                        </div>
+                        <div style={{ marginBottom: '2rem' }}>
+                            <p style={{ color: '#a1a1aa', fontSize: '0.9rem', marginBottom: '0.5rem' }}>Streak Bonus</p>
+                            <h4 style={{ fontSize: '2.5rem', fontWeight: 800, color: '#facc15' }}>{growthData?.streakBonus || '0%'} <span style={{ fontSize: '1rem', color: '#a1a1aa', fontWeight: 500 }}>boost</span></h4>
+                        </div>
+                         <div className="glass-card" style={{ padding: '1rem', borderLeft: '4px solid #10b981' }}>
+                            <p style={{ fontSize: '0.9rem', lineHeight: 1.5, color: '#e4e4e7' }}>
+                                {growthData?.insight || "Keep posting consistently to accelerate your growth trajectory."}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div style={{ height: '300px' }}>
+                        <h4 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '1rem', textAlign: 'center', color: '#a1a1aa' }}>30-Day Follower Projection</h4>
+                        <ResponsiveContainer width="100%" height="100%">
+                            <AreaChart data={growthData?.projection || []}>
+                                <defs>
+                                    <linearGradient id="growthGradient" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
+                                        <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                                    </linearGradient>
+                                </defs>
+                                <XAxis dataKey="date" tick={{ fill: '#71717a', fontSize: 10 }} axisLine={false} tickLine={false} />
+                                <YAxis hide domain={['auto', 'auto']} />
+                                <Tooltip 
+                                    contentStyle={{ backgroundColor: '#18181b', border: '1px solid #27272a', borderRadius: '8px' }}
+                                    itemStyle={{ color: '#fff' }}
+                                />
+                                <Area type="monotone" dataKey="followers" stroke="#10b981" fillOpacity={1} fill="url(#growthGradient)" strokeWidth={2} />
+                                <Area type="monotone" dataKey="viral" stroke="#facc15" strokeDasharray="5 5" fill="none" strokeWidth={2} name="Viral Potential" />
+                            </AreaChart>
+                        </ResponsiveContainer>
+                    </div>
+
+                </div>
             </div>
         </div>
 

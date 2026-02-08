@@ -25,8 +25,8 @@ export default function CommunityHub() {
   async function fetchCommunityData() {
       try {
           const [postsRes, groupsRes] = await Promise.all([
-              fetch('/api/community?type=feed'), // Assuming generic feed endpoint
-              fetch('/api/community/list')       // Assuming list of user's groups
+              fetch('/api/community?type=feed'), 
+              fetch('/api/community/groups/list')       
           ]);
           
           if (postsRes.ok) {
@@ -34,11 +34,8 @@ export default function CommunityHub() {
               setPosts(data);
           }
           if (groupsRes.ok) {
-               // If this endpoint doesn't exist yet, we might get 404, handling gracefully
-               try {
-                   const gData = await groupsRes.json();
-                   if (Array.isArray(gData)) setGroups(gData);
-               } catch (e) { console.log('Groups API not ready'); }
+              const gData = await groupsRes.json();
+              if (Array.isArray(gData)) setGroups(gData);
           }
       } catch (error) {
           console.error(error);
@@ -59,7 +56,7 @@ export default function CommunityHub() {
           });
           if (res.ok) {
               const post = await res.json();
-              setPosts([post, ...posts]); // Optimistic update ideally, but here just prepend
+              setPosts([post, ...posts]); 
               setNewPost('');
           }
       } catch (error) {
@@ -70,13 +67,13 @@ export default function CommunityHub() {
   async function createGroup() {
       if (!groupName) return;
       try {
-          const res = await fetch('/api/community/group/create', {
+          const res = await fetch('/api/community/groups/create', {
               method: 'POST',
               body: JSON.stringify({ name: groupName, description: groupDesc, isPrivate })
           });
           if (res.ok) {
               const newGroup = await res.json();
-              setGroups([...groups, newGroup]);
+              setGroups([newGroup, ...groups]);
               setShowCreateGroup(false);
               setGroupName('');
               setGroupDesc('');
@@ -85,6 +82,33 @@ export default function CommunityHub() {
           console.error(error);
       }
   }
+
+  // Invite Logic
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [showInviteModal, setShowInviteModal] = useState(false);
+
+  async function inviteUser() {
+      if (!inviteEmail || !selectedGroup) return;
+      try {
+        const res = await fetch('/api/community/groups/invite', {
+            method: 'POST',
+            body: JSON.stringify({ email: inviteEmail, groupId: selectedGroup })
+        });
+        if (res.ok) {
+            alert('Invitation sent!');
+            setShowInviteModal(false);
+            setInviteEmail('');
+        } else {
+            const err = await res.json();
+            alert(err.error || 'Failed to invite');
+        }
+      } catch (e) {
+        console.error(e);
+      }
+  }
+
+  const currentGroup = groups.find(g => g.id === selectedGroup);
+  const isAdmin = currentGroup?.members?.[0]?.role === 'ADMIN';
 
   return (
     <div className="fade-in-up" style={{ height: 'calc(100vh - 100px)', display: 'grid', gridTemplateColumns: '260px 1fr 260px', gap: '2rem' }}>
@@ -103,7 +127,7 @@ export default function CommunityHub() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', overflowY: 'auto' }}>
             <button 
                 onClick={() => setSelectedGroup(null)}
-                className={`text-left p-2 rounded-lg flex items-center gap-2 transition-all ${!selectedGroup ? 'bg-white/10 text-white' : 'text-zinc-400 hover:bg-white/5'}`}
+                className={`text-left p-2 rounded-lg flex items-center gap-2 transition-all ${!selectedGroup ? 'bg-white/10 text-primary' : 'text-zinc-400 hover:bg-white/5'}`}
             >
                 <Globe size={16} /> Global Feed
             </button>
@@ -111,7 +135,7 @@ export default function CommunityHub() {
                 <button 
                     key={group.id}
                     onClick={() => setSelectedGroup(group.id)}
-                    className={`text-left p-2 rounded-lg flex items-center gap-2 transition-all ${selectedGroup === group.id ? 'bg-white/10 text-white' : 'text-zinc-400 hover:bg-white/5'}`}
+                    className={`text-left p-2 rounded-lg flex items-center gap-2 transition-all ${selectedGroup === group.id ? 'bg-white/10 text-primary' : 'text-zinc-400 hover:bg-white/5'}`}
                 >
                     {group.isPrivate ? <Lock size={14} /> : <Hash size={14} />}
                     <span className="truncate">{group.name}</span>
@@ -119,34 +143,58 @@ export default function CommunityHub() {
             ))}
         </div>
         
-        {/* Create Group Modal/Popover Overlay */}
+        {/* Create Group Modal */}
         {showCreateGroup && (
-            <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '300px', background: '#18181b', padding: '1.5rem', borderRadius: '1rem', border: '1px solid #3f3f46', zIndex: 50, boxShadow: '0 20px 50px rgba(0,0,0,0.5)' }}>
-                <h3 style={{ fontWeight: 700, marginBottom: '1rem' }}>Create New Group</h3>
-                <input 
-                    type="text" 
-                    placeholder="Group Name" 
-                    className="glass-input mb-2 w-full"
-                    value={groupName}
-                    onChange={(e) => setGroupName(e.target.value)}
-                />
-                <textarea 
-                    placeholder="Description" 
-                    className="glass-input mb-2 w-full"
-                    value={groupDesc}
-                    onChange={(e) => setGroupDesc(e.target.value)}
-                />
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
+            <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div className="glass-panel" style={{ width: '400px', padding: '2rem', background: '#18181b' }}>
+                    <h3 style={{ fontWeight: 700, marginBottom: '1.5rem' }}>Create New Group</h3>
                     <input 
-                        type="checkbox" 
-                        checked={isPrivate} 
-                        onChange={(e) => setIsPrivate(e.target.checked)} 
+                        type="text" 
+                        placeholder="Group Name" 
+                        className="glass-input mb-4 w-full"
+                        value={groupName}
+                        onChange={(e) => setGroupName(e.target.value)}
                     />
-                    <span style={{ fontSize: '0.9rem', color: '#a1a1aa' }}>Private Group</span>
+                    <textarea 
+                        placeholder="Description" 
+                        className="glass-input mb-4 w-full"
+                        value={groupDesc}
+                        onChange={(e) => setGroupDesc(e.target.value)}
+                    />
+                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem' }}>
+                        <input 
+                            type="checkbox" 
+                            checked={isPrivate} 
+                            onChange={(e) => setIsPrivate(e.target.checked)} 
+                            style={{ width: 'auto' }}
+                        />
+                        <span style={{ fontSize: '0.9rem', color: '#a1a1aa' }}>Private Group (Invite Only)</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
+                        <button onClick={() => setShowCreateGroup(false)} className="btn-ghost">Cancel</button>
+                        <button onClick={createGroup} className="btn-primary">Create Group</button>
+                    </div>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
-                    <button onClick={() => setShowCreateGroup(false)} className="btn-ghost" style={{ fontSize: '0.9rem' }}>Cancel</button>
-                    <button onClick={createGroup} className="btn-primary" style={{ fontSize: '0.9rem' }}>Create</button>
+            </div>
+        )}
+
+        {/* Invite Modal */}
+        {showInviteModal && (
+            <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div className="glass-panel" style={{ width: '400px', padding: '2rem', background: '#18181b' }}>
+                    <h3 style={{ fontWeight: 700, marginBottom: '1rem' }}>Invite Member</h3>
+                    <p style={{ color: '#a1a1aa', marginBottom: '1.5rem', fontSize: '0.9rem' }}>Add members to <strong>{currentGroup?.name}</strong> by email.</p>
+                    <input 
+                        type="email" 
+                        placeholder="user@example.com" 
+                        className="glass-input mb-4 w-full"
+                        value={inviteEmail}
+                        onChange={(e) => setInviteEmail(e.target.value)}
+                    />
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
+                        <button onClick={() => setShowInviteModal(false)} className="btn-ghost">Cancel</button>
+                        <button onClick={inviteUser} className="btn-primary">Send Invite</button>
+                    </div>
                 </div>
             </div>
         )}
@@ -154,21 +202,41 @@ export default function CommunityHub() {
 
       {/* Center: Feed */}
       <div style={{ overflowY: 'auto', paddingRight: '0.5rem' }}>
+          
+          {/* Group Header */}
+          {selectedGroup && currentGroup && (
+              <div className="glass-panel" style={{ padding: '1.5rem', marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                      <h2 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '0.25rem' }}>{currentGroup.name}</h2>
+                      <p style={{ color: '#a1a1aa', fontSize: '0.9rem' }}>{currentGroup.description}</p>
+                      <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem', fontSize: '0.8rem', color: '#a1a1aa' }}>
+                           <span className='flex items-center gap-1'><Users size={14}/> {currentGroup._count?.members || 1} Members</span>
+                           <span className='flex items-center gap-1'><MessageSquare size={14}/> {currentGroup._count?.posts || 0} Posts</span>
+                      </div>
+                  </div>
+                  {isAdmin && (
+                      <button onClick={() => setShowInviteModal(true)} className="btn-secondary flex items-center gap-2">
+                          <Plus size={16} /> Invite
+                      </button>
+                  )}
+              </div>
+          )}
+
           {/* Post Creator */}
           <div className="glass-panel" style={{ padding: '1.5rem', marginBottom: '2rem' }}>
               <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
-                  <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'linear-gradient(135deg, #6366f1, #a855f7)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}>
+                  <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'linear-gradient(135deg, #6366f1, #a855f7)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, color: 'white' }}>
                       {user?.name?.[0] || 'U'}
                   </div>
                   <textarea 
-                    placeholder={selectedGroup ? `Post to ${groups.find(g => g.id === selectedGroup)?.name}...` : "Share your latest milestone..."}
+                    placeholder={selectedGroup ? `Post to ${currentGroup?.name}...` : "Share with the community..."}
                     className="glass-input w-full"
                     style={{ minHeight: '80px', resize: 'none', border: 'none', background: 'transparent', padding: '0.5rem' }}
                     value={newPost}
                     onChange={(e) => setNewPost(e.target.value)}
                   />
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '1rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--card-border)', paddingTop: '1rem' }}>
                   <div style={{ display: 'flex', gap: '1rem', color: '#a1a1aa' }}>
                       {/* Icons for attachments could go here */}
                   </div>
@@ -185,12 +253,14 @@ export default function CommunityHub() {
 
           {/* Feed Stream */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-              {posts.map((post) => (
+              {posts
+                .filter(p => selectedGroup ? p.groupId === selectedGroup : !p.groupId) // Filter posts locally for now or refetch
+                .map((post) => (
                   <PostCard key={post.id} post={post} />
               ))}
-              {posts.length === 0 && !loading && (
+              {posts.filter(p => selectedGroup ? p.groupId === selectedGroup : !p.groupId).length === 0 && !loading && (
                   <div style={{ textAlign: 'center', padding: '3rem', color: '#52525b' }}>
-                      <p>No posts yet. Be the first to share something!</p>
+                      <p>No posts yet in this {selectedGroup ? 'group' : 'feed'}. Be the first!</p>
                   </div>
               )}
           </div>
@@ -199,17 +269,20 @@ export default function CommunityHub() {
       {/* Right Sidebar: Suggestions */}
       <div className="glass-panel" style={{ padding: '1.5rem', height: 'fit-content' }}>
           <h3 style={{ fontWeight: 700, marginBottom: '1rem', fontSize: '0.9rem', color: '#a1a1aa', textTransform: 'uppercase' }}>
-              Top Creators
+              Suggested Groups
           </h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              {[1,2,3].map((i) => (
+              {/* Mock suggestions for now */}
+              {[1,2].map((i) => (
                   <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                      <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#27272a' }}></div>
-                      <div style={{ flex: 1 }}>
-                          <p style={{ fontSize: '0.9rem', fontWeight: 600 }}>Creator {i}</p>
-                          <p style={{ fontSize: '0.75rem', color: '#71717a' }}>12.5k Subs</p>
+                      <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: '#27272a', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <Hash size={16} className='text-zinc-500' />
                       </div>
-                      <button className="btn-ghost" style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem' }}>Follow</button>
+                      <div style={{ flex: 1 }}>
+                          <p style={{ fontSize: '0.9rem', fontWeight: 600 }}>Creator Talk {i}</p>
+                          <p style={{ fontSize: '0.75rem', color: '#71717a' }}>Public Group</p>
+                      </div>
+                      <button className="btn-ghost" style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem' }}>Join</button>
                   </div>
               ))}
           </div>
@@ -232,7 +305,7 @@ function PostCard({ post }: any) {
         <div className="glass-panel" style={{ padding: '1.5rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '1rem' }}>
                 <div style={{ display: 'flex', gap: '0.75rem' }}>
-                    <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: '#3f3f46', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: '#3f3f46', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 600 }}>
                          {post.user?.name?.[0] || 'U'}
                     </div>
                     <div>
@@ -240,14 +313,14 @@ function PostCard({ post }: any) {
                         <p style={{ fontSize: '0.8rem', color: '#a1a1aa' }}>{new Date(post.createdAt).toLocaleDateString()}</p>
                     </div>
                 </div>
-                <button className="btn-ghost" style={{ padding: '0.25rem' }}><MoreHorizontal size={16} /></button>
+                {/* <button className="btn-ghost" style={{ padding: '0.25rem' }}><MoreHorizontal size={16} /></button> */}
             </div>
             
-            <p style={{ fontSize: '1rem', lineHeight: 1.6, color: '#e4e4e7', marginBottom: '1rem' }}>
+            <p style={{ fontSize: '1rem', lineHeight: 1.6, color: 'var(--foreground)', marginBottom: '1rem' }}>
                 {post.content}
             </p>
 
-            <div style={{ display: 'flex', gap: '1.5rem', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '1rem' }}>
+            <div style={{ display: 'flex', gap: '1.5rem', borderTop: '1px solid var(--card-border)', paddingTop: '1rem' }}>
                 <button onClick={handleLike} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'transparent', border: 'none', color: liked ? '#ec4899' : '#a1a1aa', cursor: 'pointer' }}>
                     <Heart size={18} fill={liked ? '#ec4899' : 'none'} /> {likes}
                 </button>

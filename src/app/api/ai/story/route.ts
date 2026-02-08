@@ -24,8 +24,15 @@ export async function POST(req: Request) {
         const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
         const lang = language === 'telugu' ? 'Telugu' : 'English';
 
-        // Specific prompt for storytelling
-        const prompt = `Write a compelling short story about "${topic}" in ${lang}. Focus on emotion and narrative flow.`;
+        // Specific prompt for long-form storytelling
+        const prompt = `Write a highly detailed, immersive, and long-form story about "${topic}" in ${lang}. 
+        REQUIREMENTS:
+        1. Length: Minimum 100 lines / 1000 words.
+        2. Depth: Include deep character development, dialogue, and vivid scene descriptions.
+        3. Structure: Well-defined Beginning, Middle (Conflict), and End.
+        4. Tone: Professional, engaging, and suitable for a high-quality video script or book.
+        5. Content: If the topic is specific (e.g., 'Bahubali'), ensure factual/lore accuracy while being creative.
+        `;
 
         const result = await model.generateContent(prompt);
         const text = result.response.text();
