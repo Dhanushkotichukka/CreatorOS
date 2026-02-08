@@ -2,7 +2,7 @@
 
 import { useAuth } from '@/context/AuthContext';
 import { useState, useEffect } from 'react';
-import { PlayCircle, TrendingUp, Users, Eye, ThumbsUp, MessageCircle, AlertCircle, Instagram, Youtube, CheckCircle2, ChevronRight, X, Zap, Clock, Target, CalendarDays } from 'lucide-react';
+import { PlayCircle, TrendingUp, Users, Eye, ThumbsUp, MessageCircle, AlertCircle, Instagram, Youtube, CheckCircle2, ChevronRight, X, Zap, Clock, Target, CalendarDays, Sparkles } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 
 export default function AnalyticsLab() {
