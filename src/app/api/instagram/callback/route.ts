@@ -34,8 +34,12 @@ export async function GET(req: Request) {
         const accessToken = tokenData.access_token;
 
         // 2. Identify the Instagram Business Account (Handle Pagination)
+
         let pageWithIg = null;
-        let url = `https://graph.facebook.com/v18.0/me/accounts?fields=name,instagram_business_account{id,username,profile_picture_url}&access_token=${accessToken}&limit=100`;
+        let url: string | null = `https://graph.facebook.com/v18.0/me/accounts?fields=name,instagram_business_account{id,username,profile_picture_url}&access_token=${accessToken}&limit=100`;
+
+        let allPageNames: string[] = [];
+        let totalPagesFound = 0;
 
         while (url && !pageWithIg) {
             const accountsRes = await fetch(url);
@@ -47,9 +51,11 @@ export async function GET(req: Request) {
             }
 
             if (accountsData.data && accountsData.data.length > 0) {
-                // Log pages found for debugging
-                console.log(`Found ${accountsData.data.length} pages:`, accountsData.data.map((p: any) => p.name));
+                totalPagesFound += accountsData.data.length;
+                const pageNames = accountsData.data.map((p: any) => p.name);
+                allPageNames = [...allPageNames, ...pageNames];
 
+                console.log(`Found ${accountsData.data.length} pages:`, pageNames);
                 pageWithIg = accountsData.data.find((p: any) => p.instagram_business_account);
             }
 
@@ -61,8 +67,8 @@ export async function GET(req: Request) {
 
         if (!pageWithIg) {
             console.error('No Instagram Business Account found across all pages.');
-            const pageNames = accountsData.data?.map((p: any) => p.name).join(', ') || 'None';
-            const debugInfo = encodeURIComponent(`Found ${accountsData.data?.length || 0} pages: ${pageNames}. None had 'instagram_business_account' field.`);
+            const debugNames = allPageNames.join(', ') || 'None';
+            const debugInfo = encodeURIComponent(`Found ${totalPagesFound} pages: ${debugNames}. None had 'instagram_business_account' field. Check 'Linked Accounts' in FB Page Settings.`);
             return NextResponse.redirect(new URL(`/creator/connect?error=no_instagram_business_account&debug=${debugInfo}`, req.url));
         }
 
