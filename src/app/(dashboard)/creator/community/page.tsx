@@ -1,133 +1,260 @@
 "use client";
 
-import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { Heart, MessageSquare, Share2, Send, MoreHorizontal, User } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { MessageSquare, Heart, Share2, MoreHorizontal, Users, Plus, Hash, Globe, Lock, Search, Send, User } from 'lucide-react';
 
-export default function Community() {
+export default function CommunityHub() {
   const { user } = useAuth();
   const [posts, setPosts] = useState<any[]>([]);
-  const [newPost, setNewPost] = useState('');
+  const [groups, setGroups] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [posting, setPosting] = useState(false);
+  const [newPost, setNewPost] = useState('');
+  const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
+  const [showCreateGroup, setShowCreateGroup] = useState(false);
+
+  // Group Form State
+  const [groupName, setGroupName] = useState('');
+  const [groupDesc, setGroupDesc] = useState('');
+  const [isPrivate, setIsPrivate] = useState(false);
 
   useEffect(() => {
-    fetchPosts();
+    fetchCommunityData();
   }, []);
 
-  const fetchPosts = async () => {
-    try {
-        const res = await fetch('/api/community');
-        const data = await res.json();
-        setPosts(data);
-    } catch (error) {
-        console.error(error);
-    } finally {
-        setLoading(false);
-    }
-  };
-
-  const handlePost = async () => {
-      if (!newPost.trim()) return;
-      setPosting(true);
+  async function fetchCommunityData() {
       try {
-          const res = await fetch('/api/community', {
-              method: 'POST',
-              body: JSON.stringify({ content: newPost })
-          });
-          const post = await res.json();
-          setPosts([post, ...posts]);
-          setNewPost('');
+          const [postsRes, groupsRes] = await Promise.all([
+              fetch('/api/community?type=feed'), // Assuming generic feed endpoint
+              fetch('/api/community/list')       // Assuming list of user's groups
+          ]);
+          
+          if (postsRes.ok) {
+              const data = await postsRes.json();
+              setPosts(data);
+          }
+          if (groupsRes.ok) {
+               // If this endpoint doesn't exist yet, we might get 404, handling gracefully
+               try {
+                   const gData = await groupsRes.json();
+                   if (Array.isArray(gData)) setGroups(gData);
+               } catch (e) { console.log('Groups API not ready'); }
+          }
       } catch (error) {
           console.error(error);
       } finally {
-          setPosting(false);
+          setLoading(false);
       }
-  };
+  }
+
+  async function handlePost() {
+      if (!newPost.trim()) return;
+      try {
+          const res = await fetch('/api/community', {
+              method: 'POST',
+              body: JSON.stringify({
+                  content: newPost,
+                  groupId: selectedGroup
+              })
+          });
+          if (res.ok) {
+              const post = await res.json();
+              setPosts([post, ...posts]); // Optimistic update ideally, but here just prepend
+              setNewPost('');
+          }
+      } catch (error) {
+          console.error(error);
+      }
+  }
+
+  async function createGroup() {
+      if (!groupName) return;
+      try {
+          const res = await fetch('/api/community/group/create', {
+              method: 'POST',
+              body: JSON.stringify({ name: groupName, description: groupDesc, isPrivate })
+          });
+          if (res.ok) {
+              const newGroup = await res.json();
+              setGroups([...groups, newGroup]);
+              setShowCreateGroup(false);
+              setGroupName('');
+              setGroupDesc('');
+          }
+      } catch (error) {
+          console.error(error);
+      }
+  }
 
   return (
-    <div style={{ maxWidth: '800px', margin: '0 auto' }} className="fade-in-up">
-      <header style={{ marginBottom: '2rem' }}>
-        <h1 className="text-gradient" style={{ fontSize: '2.5rem', fontWeight: 800, marginBottom: '0.5rem' }}>Creator Community</h1>
-        <p style={{ color: '#a1a1aa' }}>Connect, collaborate, and grow with fellow creators.</p>
-      </header>
-
-      {/* Create Post */}
-      <div className="glass-panel" style={{ padding: '1.5rem', marginBottom: '2rem' }}>
-          <div style={{ display: 'flex', gap: '1rem' }}>
-              <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'linear-gradient(135deg, #8b5cf6 0%, #3b82f6 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <User size={20} color="white" />
-              </div>
-              <div style={{ flex: 1 }}>
-                  <textarea 
-                    value={newPost}
-                    onChange={(e) => setNewPost(e.target.value)}
-                    placeholder="Share your latest win or ask for advice..."
-                    style={{ 
-                        width: '100%', 
-                        background: 'transparent', 
-                        border: 'none', 
-                        color: 'white', 
-                        fontSize: '1rem', 
-                        resize: 'none', 
-                        minHeight: '80px',
-                        outline: 'none'
-                    }}
-                  />
-                  <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: '1rem', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-                      <button 
-                        onClick={handlePost}
-                        disabled={posting || !newPost.trim()}
-                        className="btn-primary" 
-                        style={{ padding: '0.5rem 1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', opacity: !newPost.trim() ? 0.5 : 1 }}
-                      >
-                          {posting ? 'Posting...' : <><Send size={16} /> Post</>}
-                      </button>
-                  </div>
-              </div>
-          </div>
+    <div className="fade-in-up" style={{ height: 'calc(100vh - 100px)', display: 'grid', gridTemplateColumns: '260px 1fr 260px', gap: '2rem' }}>
+      
+      {/* Left Sidebar: Groups */}
+      <div className="glass-panel" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+            <h3 style={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <Users size={18} /> Groups
+            </h3>
+            <button onClick={() => setShowCreateGroup(true)} className="btn-ghost" style={{ padding: '0.25rem', borderRadius: '50%' }}>
+                <Plus size={18} />
+            </button>
+        </div>
+        
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', overflowY: 'auto' }}>
+            <button 
+                onClick={() => setSelectedGroup(null)}
+                className={`text-left p-2 rounded-lg flex items-center gap-2 transition-all ${!selectedGroup ? 'bg-white/10 text-white' : 'text-zinc-400 hover:bg-white/5'}`}
+            >
+                <Globe size={16} /> Global Feed
+            </button>
+            {groups.map((group) => (
+                <button 
+                    key={group.id}
+                    onClick={() => setSelectedGroup(group.id)}
+                    className={`text-left p-2 rounded-lg flex items-center gap-2 transition-all ${selectedGroup === group.id ? 'bg-white/10 text-white' : 'text-zinc-400 hover:bg-white/5'}`}
+                >
+                    {group.isPrivate ? <Lock size={14} /> : <Hash size={14} />}
+                    <span className="truncate">{group.name}</span>
+                </button>
+            ))}
+        </div>
+        
+        {/* Create Group Modal/Popover Overlay */}
+        {showCreateGroup && (
+            <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '300px', background: '#18181b', padding: '1.5rem', borderRadius: '1rem', border: '1px solid #3f3f46', zIndex: 50, boxShadow: '0 20px 50px rgba(0,0,0,0.5)' }}>
+                <h3 style={{ fontWeight: 700, marginBottom: '1rem' }}>Create New Group</h3>
+                <input 
+                    type="text" 
+                    placeholder="Group Name" 
+                    className="glass-input mb-2 w-full"
+                    value={groupName}
+                    onChange={(e) => setGroupName(e.target.value)}
+                />
+                <textarea 
+                    placeholder="Description" 
+                    className="glass-input mb-2 w-full"
+                    value={groupDesc}
+                    onChange={(e) => setGroupDesc(e.target.value)}
+                />
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
+                    <input 
+                        type="checkbox" 
+                        checked={isPrivate} 
+                        onChange={(e) => setIsPrivate(e.target.checked)} 
+                    />
+                    <span style={{ fontSize: '0.9rem', color: '#a1a1aa' }}>Private Group</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
+                    <button onClick={() => setShowCreateGroup(false)} className="btn-ghost" style={{ fontSize: '0.9rem' }}>Cancel</button>
+                    <button onClick={createGroup} className="btn-primary" style={{ fontSize: '0.9rem' }}>Create</button>
+                </div>
+            </div>
+        )}
       </div>
 
-      {/* Feed */}
-      {loading ? (
-          <div style={{ textAlign: 'center', padding: '2rem', color: '#a1a1aa' }}>Loading feed...</div>
-      ) : (
+      {/* Center: Feed */}
+      <div style={{ overflowY: 'auto', paddingRight: '0.5rem' }}>
+          {/* Post Creator */}
+          <div className="glass-panel" style={{ padding: '1.5rem', marginBottom: '2rem' }}>
+              <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
+                  <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'linear-gradient(135deg, #6366f1, #a855f7)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}>
+                      {user?.name?.[0] || 'U'}
+                  </div>
+                  <textarea 
+                    placeholder={selectedGroup ? `Post to ${groups.find(g => g.id === selectedGroup)?.name}...` : "Share your latest milestone..."}
+                    className="glass-input w-full"
+                    style={{ minHeight: '80px', resize: 'none', border: 'none', background: 'transparent', padding: '0.5rem' }}
+                    value={newPost}
+                    onChange={(e) => setNewPost(e.target.value)}
+                  />
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '1rem' }}>
+                  <div style={{ display: 'flex', gap: '1rem', color: '#a1a1aa' }}>
+                      {/* Icons for attachments could go here */}
+                  </div>
+                  <button 
+                    onClick={handlePost}
+                    className="btn-primary" 
+                    style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', opacity: newPost.trim() ? 1 : 0.5 }}
+                    disabled={!newPost.trim()}
+                  >
+                      <Send size={16} /> Post
+                  </button>
+              </div>
+          </div>
+
+          {/* Feed Stream */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
               {posts.map((post) => (
                   <PostCard key={post.id} post={post} />
               ))}
+              {posts.length === 0 && !loading && (
+                  <div style={{ textAlign: 'center', padding: '3rem', color: '#52525b' }}>
+                      <p>No posts yet. Be the first to share something!</p>
+                  </div>
+              )}
           </div>
-      )}
+      </div>
+
+      {/* Right Sidebar: Suggestions */}
+      <div className="glass-panel" style={{ padding: '1.5rem', height: 'fit-content' }}>
+          <h3 style={{ fontWeight: 700, marginBottom: '1rem', fontSize: '0.9rem', color: '#a1a1aa', textTransform: 'uppercase' }}>
+              Top Creators
+          </h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              {[1,2,3].map((i) => (
+                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                      <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#27272a' }}></div>
+                      <div style={{ flex: 1 }}>
+                          <p style={{ fontSize: '0.9rem', fontWeight: 600 }}>Creator {i}</p>
+                          <p style={{ fontSize: '0.75rem', color: '#71717a' }}>12.5k Subs</p>
+                      </div>
+                      <button className="btn-ghost" style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem' }}>Follow</button>
+                  </div>
+              ))}
+          </div>
+      </div>
     </div>
   );
 }
 
 function PostCard({ post }: any) {
+    const [likes, setLikes] = useState(post.likes || 0);
+    const [liked, setLiked] = useState(false);
+
+    const handleLike = () => {
+        setLiked(!liked);
+        setLikes(liked ? likes - 1 : likes + 1);
+        // Fire and forget API call
+    };
+
     return (
         <div className="glass-panel" style={{ padding: '1.5rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
-                <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                    <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: '#27272a', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <span style={{ fontWeight: 700, color: '#a1a1aa' }}>{post.author[0]}</span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '1rem' }}>
+                <div style={{ display: 'flex', gap: '0.75rem' }}>
+                    <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: '#3f3f46', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                         {post.user?.name?.[0] || 'U'}
                     </div>
                     <div>
-                        <h4 style={{ fontWeight: 600 }}>{post.author}</h4>
-                        <p style={{ fontSize: '0.8rem', color: '#71717a' }}>{new Date(post.timestamp).toLocaleDateString()}</p>
+                        <h4 style={{ fontWeight: 700, fontSize: '0.95rem' }}>{post.user?.name || 'Anonymous'}</h4>
+                        <p style={{ fontSize: '0.8rem', color: '#a1a1aa' }}>{new Date(post.createdAt).toLocaleDateString()}</p>
                     </div>
                 </div>
-                <button className="btn-ghost" style={{ padding: '0.5rem' }}><MoreHorizontal size={18} /></button>
+                <button className="btn-ghost" style={{ padding: '0.25rem' }}><MoreHorizontal size={16} /></button>
             </div>
             
-            <p style={{ lineHeight: 1.6, marginBottom: '1.5rem', color: '#e4e4e7' }}>{post.content}</p>
+            <p style={{ fontSize: '1rem', lineHeight: 1.6, color: '#e4e4e7', marginBottom: '1rem' }}>
+                {post.content}
+            </p>
 
-            <div style={{ display: 'flex', gap: '2rem' }}>
-                <button className="btn-ghost" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#a1a1aa', padding: '0.5rem' }}>
-                    <Heart size={18} /> <span style={{ fontSize: '0.9rem' }}>{post.likes}</span>
+            <div style={{ display: 'flex', gap: '1.5rem', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '1rem' }}>
+                <button onClick={handleLike} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'transparent', border: 'none', color: liked ? '#ec4899' : '#a1a1aa', cursor: 'pointer' }}>
+                    <Heart size={18} fill={liked ? '#ec4899' : 'none'} /> {likes}
                 </button>
-                <button className="btn-ghost" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#a1a1aa', padding: '0.5rem' }}>
-                    <MessageSquare size={18} /> <span style={{ fontSize: '0.9rem' }}>{post.replies?.length || 0}</span>
+                <button style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'transparent', border: 'none', color: '#a1a1aa', cursor: 'pointer' }}>
+                    <MessageSquare size={18} /> {post.comments?.length || 0}
                 </button>
-                <button className="btn-ghost" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#a1a1aa', padding: '0.5rem' }}>
+                <button style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'transparent', border: 'none', color: '#a1a1aa', cursor: 'pointer' }}>
                     <Share2 size={18} />
                 </button>
             </div>

@@ -1,68 +1,91 @@
 import { NextResponse } from 'next/server';
+import { auth } from '@/auth';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
-
-export const dynamic = 'force-dynamic';
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
 export async function POST(req: Request) {
+    const session = await auth();
+    if (!session?.user?.id) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     try {
         const { platform, stats } = await req.json();
-        const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+
+        // ---------------------------------------------------------
+        // Construct Prompt
+        // ---------------------------------------------------------
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
+        let context = "";
+        if (platform === 'youtube') {
+            context = `
+                Platform: YouTube
+                Subscribers: ${stats.subscriberCount}
+                Views: ${stats.viewCount}
+                Video Count: ${stats.videoCount}
+                Recent Videos: ${JSON.stringify(stats.videos?.slice(0, 5) || [])}
+            `;
+        } else {
+            context = `
+                Platform: Instagram
+                Followers: ${stats.followers}
+                Media Count: ${stats.media_count}
+                Recent Posts: ${JSON.stringify(stats.posts?.slice(0, 5) || [])}
+            `;
+        }
 
         const prompt = `
-        Act as a senior social media strategist. Analyze this ${platform} creator's performance and provide a detailed improvement plan.
-        
-        Data:
-        ${JSON.stringify(stats, null, 2)}
-        
-        Return the response as a valid JSON object with this exact structure:
-        {
-            "score": number (0-100),
-            "summary": "Short 1-sentence summary of current status.",
-            "strengths": ["string", "string"],
-            "weaknesses": ["string", "string"],
-            "actions": [
-                { "title": "string", "description": "string (actionable advice)" },
-                { "title": "string", "description": "string" },
-                { "title": "string", "description": "string" }
-            ],
-            "strategy": {
-                "postingFrequency": "string (e.g. 3x/week)",
-                "bestTime": "string (e.g. 6PM EST)",
-                "contentFocus": "string (e.g. Educational Shorts)"
+            You are an expert Social Media Strategist and Data Analyst for top creators.
+            Analyze the following ${platform} data and provide a "Growth Audit".
+            
+            ${context}
+
+            Your response must be a valid JSON object with the following structure:
+            {
+                "score": (number 0-100, based on engagement health),
+                "summary": (string, 1-2 sentences summarizing performance),
+                "strategy": {
+                    "postingFrequency": (string, e.g. "3x week"),
+                    "bestTime": (string, e.g. "6 PM EST"),
+                    "contentFocus": (string, e.g. "Educational Shorts")
+                },
+                "actions": [
+                    { "title": (string), "description": (string) }
+                ],
+                "strengths": [(string), (string)],
+                "weaknesses": [(string), (string)]
             }
-        }
-        Do not use markdown formatting in the output.
+            
+            Do not include markdown formatting like \`\`\`json. Just return the raw JSON string.
         `;
 
+        // ---------------------------------------------------------
+        // Call AI
+        // ---------------------------------------------------------
         const result = await model.generateContent(prompt);
         const response = await result.response;
-        let text = response.text();
+        const text = response.text().replace(/```json/g, '').replace(/```/g, '').trim();
 
-        // Clean up markdown code blocks if present
-        text = text.replace(/```json/g, '').replace(/```/g, '').trim();
+        try {
+            const data = JSON.parse(text);
+            return NextResponse.json(data);
+        } catch (parseError) {
+            console.error("AI JSON Parse Error", parseError);
+            // Fallback if AI hallucinates format
+            return NextResponse.json({
+                score: 75,
+                summary: "AI analyis pending. Focus on consistent uploading for now.",
+                strategy: { postingFrequency: "Daily", bestTime: "12 PM", contentFocus: "Trending" },
+                actions: [{ title: "Maintain Streak", description: "Keep posting daily to train the algorithm." }],
+                strengths: ["Consistency"],
+                weaknesses: ["Engagement"]
+            });
+        }
 
-        const analysis = JSON.parse(text);
-
-        return NextResponse.json(analysis);
     } catch (error) {
         console.error('AI Improvement Analysis Error:', error);
-        return NextResponse.json({
-            score: 72,
-            summary: "Good foundation, but consistency needs improvement.",
-            strengths: ["High visual quality", "Good engagement on reels"],
-            weaknesses: ["Irregular posting schedule", "Low comment response rate"],
-            actions: [
-                { title: "Optimize Strategy", description: "Post at least 3 times a week to build momentum." },
-                { title: "Engage More", description: "Reply to comments within the first hour." },
-                { title: "Cross-Promote", description: "Share your top posts to stories." }
-            ],
-            strategy: {
-                postingFrequency: "3-4x / week",
-                bestTime: "18:00 Local Time",
-                contentFocus: "Behind-the-scenes & Tutorials"
-            }
-        });
+        return NextResponse.json({ error: 'Failed to analyze' }, { status: 500 });
     }
 }

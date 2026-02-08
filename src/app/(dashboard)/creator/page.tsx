@@ -1,59 +1,49 @@
 "use client";
 
 import { useAuth } from '@/context/AuthContext';
-import { ArrowUpRight, Sparkles, TrendingUp, Users, Zap, PlayCircle, Video, Image as ImageIcon, Instagram, Youtube, Edit3 } from 'lucide-react';
+import { ArrowUpRight, Sparkles, TrendingUp, Users, Zap, Flame, Youtube, Instagram, Edit3, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 export default function CreatorDashboard() {
   const { user } = useAuth();
-  const [advice, setAdvice] = useState<string>('Initializing AI Agent...');
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function fetchData() {
+    async function fetchDashboard() {
         try {
-            // 1. Fetch Real YouTube Data
-            const res = await fetch('/api/youtube/channel');
-            if (res.ok) {
-                const data = await res.json();
-                setStats(data);
-                
-                // 2. Trigger AI Analysis
-                const aiRes = await fetch('/api/ai/analyzeChannel', {
-                    method: 'POST',
-                    body: JSON.stringify({ stats: data })
-                });
-                const aiData = await aiRes.json();
-                setAdvice(aiData.analysis);
-            }
+            const res = await fetch('/api/dashboard/overview');
+            const data = await res.json();
+            setStats(data);
         } catch (error) {
             console.error(error);
-            setAdvice('Connect your YouTube channel to get AI insights.');
         } finally {
             setLoading(false);
         }
     }
-    fetchData();
+    fetchDashboard();
   }, []);
 
-  // Format chart data from videos
-  const chartData = stats?.videos?.map((v: any) => ({
-      name:  v.title.substring(0, 10) + '...',
-      engagement: parseInt(v.views) // Mapping views to engagement for the chart
-  })).reverse() || [];
+  if (loading) return <div className="p-8 text-center" style={{ color: '#a1a1aa' }}>Loading your command center...</div>;
 
   return (
-    <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+    <div style={{ maxWidth: '1200px', margin: '0 auto' }} className="fade-in-up">
+      {/* Header Section */}
       <header style={{ marginBottom: '3rem', display: 'flex', justifyContent: 'space-between', alignItems: 'end' }}>
         <div>
-          <h1 style={{ fontSize: '2.5rem', fontWeight: 800, marginBottom: '0.5rem' }}>
-            Ready to create, <span className="text-gradient text-glow">{user?.name?.split(' ')[0]}?</span>
-          </h1>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.5rem' }}>
+              <h1 style={{ fontSize: '2.5rem', fontWeight: 800 }}>
+                Welcome back, <span className="text-gradient text-glow">{user?.name?.split(' ')[0]}</span>
+              </h1>
+              <div className="glass-panel" style={{ padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', borderRadius: '2rem', border: '1px solid rgba(249, 115, 22, 0.3)', background: 'rgba(249, 115, 22, 0.1)' }}>
+                  <Flame size={18} color="#f97316" fill="#f97316" className="pulse" />
+                  <span style={{ fontWeight: 700, color: '#ffedd5' }}>{stats?.streak || 0} Day Streak</span>
+              </div>
+          </div>
           <p style={{ color: '#a1a1aa', fontSize: '1.1rem' }}>
-             {stats?.title ? `Tracking ${stats.title}` : 'Connect your account to enable real-time tracking.'}
+             Here is your daily creator intelligence report.
           </p>
         </div>
         <div style={{ display: 'flex', gap: '1rem' }}>
@@ -61,111 +51,98 @@ export default function CreatorDashboard() {
                 <Edit3 size={18} /> New Post
             </Link>
             <Link href="/creator/ai-studio" className="btn-primary neon-border" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <Sparkles size={18} /> Open Studio
+            <Sparkles size={18} /> AI Studio
             </Link>
         </div>
       </header>
 
-      {/* Unified Score Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem', marginBottom: '3rem' }}>
-        <DashboardCard 
-          title="Total Creator Score" 
-          value="88/100" 
-          sub="Combined Health" 
-          icon={Zap} 
-          gradient="linear-gradient(135deg, #10b981 0%, #059669 100%)" 
-          href="/creator/analytics"
-        />
-        <DashboardCard 
-          title="YouTube Performance" 
-          value={stats?.subscriberCount ? parseInt(stats.subscriberCount).toLocaleString() : "Connect"} 
-          sub="Live Subscribers" 
-          icon={Youtube} 
-          gradient="linear-gradient(135deg, #ff0000 0%, #cc0000 100%)" 
-          href="/creator/analytics"
-        />
-        <DashboardCard 
-          title="Instagram Health" 
-          value="Good" 
-          sub="Engagement Trending Up" 
-          icon={Instagram} 
-          gradient="linear-gradient(135deg, #ec4899 0%, #be185d 100%)" 
-          href="/creator/analytics"
-        />
-      </div>
-
-      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '2rem' }}>
-        {/* Main Chart Area */}
-        <div className="glass-panel" style={{ padding: '2rem', minHeight: '400px', display: 'flex', flexDirection: 'column' }}>
-           <h3 style={{ marginBottom: '1.5rem', fontWeight: 700, fontSize: '1.1rem' }}>Engagement Analytics</h3>
-           <div style={{ flex: 1, minHeight: '300px' }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={chartData}>
-                  <defs>
-                    <linearGradient id="colorEngagement" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.8}/>
-                      <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0}/>
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
-                  <XAxis dataKey="name" stroke="#52525b" axisLine={false} tickLine={false} dy={10} />
-                  <YAxis stroke="#52525b" axisLine={false} tickLine={false} />
-                  <Tooltip 
-                    contentStyle={{ background: '#18181b', border: '1px solid #27272a', borderRadius: '8px' }}
-                    itemStyle={{ color: '#e4e4e7' }}
-                  />
-                  <Area type="monotone" dataKey="engagement" stroke="#8b5cf6" strokeWidth={3} fillOpacity={1} fill="url(#colorEngagement)" />
-                </AreaChart>
-              </ResponsiveContainer>
-           </div>
+      {/* Main Grid */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: '1.5rem', marginBottom: '3rem' }}>
+        
+        {/* Creator Health Score (Large Card) */}
+        <div className="glass-panel" style={{ gridColumn: 'span 4', padding: '2rem', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(145deg, rgba(255,255,255,0.05) 0%, rgba(16, 185, 129, 0.05) 100%)', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
+            <div style={{ position: 'relative', width: '160px', height: '160px', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1.5rem' }}>
+                <svg width="160" height="160" viewBox="0 0 160 160" style={{ transform: 'rotate(-90deg)' }}>
+                    <circle cx="80" cy="80" r="70" fill="none" stroke="#27272a" strokeWidth="12" />
+                    <circle 
+                        cx="80" cy="80" r="70" fill="none" stroke="#10b981" strokeWidth="12" 
+                        strokeDasharray={440} 
+                        strokeDashoffset={440 - (440 * (stats?.healthScore || 0)) / 100} 
+                        strokeLinecap="round"
+                        style={{ transition: 'stroke-dashoffset 1s ease-out' }}
+                    />
+                </svg>
+                <div style={{ position: 'absolute', textAlign: 'center' }}>
+                    <span style={{ fontSize: '3rem', fontWeight: 800, color: 'white' }}>{stats?.healthScore || 0}</span>
+                </div>
+            </div>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '0.5rem' }}>Health Score</h3>
+            <p style={{ color: '#a1a1aa', textAlign: 'center', fontSize: '0.9rem' }}>Based on consistency, growth, and engagement across all platforms.</p>
         </div>
 
-        {/* AI Coach */}
-        <div className="glass-panel" style={{ padding: '0', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-          <div style={{ padding: '1.5rem', background: 'rgba(255,255,255,0.02)', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-            <h3 style={{ fontWeight: 700, fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <div style={{ width: '8px', height: '8px', background: '#ec4899', borderRadius: '50%', boxShadow: '0 0 10px #ec4899' }}></div>
-              AI Coach
-            </h3>
-          </div>
-          <div style={{ padding: '1.5rem', flex: 1 }}>
-            <div style={{ background: 'rgba(139, 92, 246, 0.1)', padding: '1rem', borderRadius: '1rem 1rem 1rem 0', marginBottom: '1rem', border: '1px solid rgba(139, 92, 246, 0.2)' }}>
-              <p style={{ fontSize: '0.9rem', lineHeight: 1.5 }}>
-                {advice} 🚀
-              </p>
+        {/* Platform Cards (Split) */}
+        <div style={{ gridColumn: 'span 8', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+            {/* YouTube Card */}
+            <DashboardCard 
+                title="YouTube"
+                value={stats?.youtube?.connected ? stats.youtube.subscribers?.toLocaleString() : "Connect"}
+                sub={stats?.youtube?.connected ? `${stats.youtube.growth} this week` : "Link Channel"}
+                icon={Youtube}
+                gradient="linear-gradient(135deg, #ff0000 0%, #cc0000 100%)"
+                href="/creator/analytics?tab=youtube"
+                connected={stats?.youtube?.connected}
+            />
+
+            {/* Instagram Card */}
+            <DashboardCard 
+                title="Instagram"
+                value={stats?.instagram?.connected ? stats.instagram.followers?.toLocaleString() : "Connect"}
+                sub={stats?.instagram?.connected ? `${stats.instagram.growth} this week` : "Link Account"}
+                icon={Instagram}
+                gradient="linear-gradient(135deg, #ec4899 0%, #be185d 100%)"
+                href="/creator/connect"
+                connected={stats?.instagram?.connected}
+            />
+
+            {/* AI Insight Card */}
+            <div className="glass-panel" style={{ gridColumn: 'span 2', padding: '1.5rem', display: 'flex', alignItems: 'center', gap: '1.5rem', background: 'linear-gradient(90deg, rgba(139, 92, 246, 0.1) 0%, rgba(0,0,0,0) 100%)' }}>
+                <div style={{ width: '50px', height: '50px', borderRadius: '12px', background: '#8b5cf6', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <Sparkles color="white" size={24} />
+                </div>
+                <div style={{ flex: 1 }}>
+                    <h4 style={{ fontWeight: 700, marginBottom: '0.25rem' }}>AI Action Item</h4>
+                    <p style={{ color: '#a1a1aa', fontSize: '0.95rem' }}>{stats?.suggestion || "Your streak is on fire! 🔥 Schedule a Reel for tomorrow to maintain momentum."}</p>
+                </div>
+                <button className="glass-button" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    View Plan <ArrowRight size={16} />
+                </button>
             </div>
-            <button className="btn-secondary" style={{ width: '100%', fontSize: '0.85rem' }}>Ask for more tips</button>
-          </div>
         </div>
       </div>
     </div>
   );
 }
 
-const ActivityIcon = ({size, color}: any) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
-);
-
-function DashboardCard({ title, value, sub, icon: Icon, gradient, href }: any) {
-  const CardContent = (
-    <div className="glass-panel" style={{ padding: '1.5rem', position: 'relative', overflow: 'hidden', height: '100%', cursor: href ? 'pointer' : 'default', transition: 'transform 0.2s' }}>
-      <div style={{ position: 'absolute', inset: 0, opacity: 0.1, background: gradient, filter: 'blur(20px)' }}></div>
-      <div style={{ position: 'relative', zIndex: 1 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '1rem' }}>
-          <div>
-            <p style={{ color: '#a1a1aa', fontSize: '0.85rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{title}</p>
-            <h3 style={{ fontSize: '2rem', fontWeight: 800, marginTop: '0.25rem' }}>{value}</h3>
+function DashboardCard({ title, value, sub, icon: Icon, gradient, href, connected }: any) {
+  return (
+    <Link href={href} className="glass-panel card-hover" style={{ padding: '1.5rem', position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', textDecoration: 'none' }}>
+      <div style={{ position: 'absolute', top: 0, right: 0, width: '100px', height: '100px', background: gradient, filter: 'blur(50px)', opacity: 0.2 }}></div>
+      
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '1.5rem' }}>
+          <div style={{ background: 'rgba(255,255,255,0.05)', padding: '0.75rem', borderRadius: '12px' }}>
+            <Icon size={24} color="white" />
           </div>
-          <div style={{ background: 'rgba(255,255,255,0.1)', padding: '0.5rem', borderRadius: '0.75rem' }}>
-            <Icon size={20} color="white" />
-          </div>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-           <span style={{ fontSize: '0.8rem', color: '#d4d4d8' }}>{sub}</span>
-        </div>
+          {!connected && <span style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem', borderRadius: '4px', background: 'rgba(255,255,255,0.1)', color: '#fff' }}>Not Connected</span>}
       </div>
-    </div>
-  );
 
-  return href ? <Link href={href} style={{ textDecoration: 'none' }}>{CardContent}</Link> : CardContent;
+      <div>
+        <h3 style={{ fontSize: '2rem', fontWeight: 800, marginBottom: '0.25rem', color: 'white' }}>
+            {value}
+        </h3>
+        <p style={{ color: '#a1a1aa', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            {connected && <TrendingUp size={14} color="#10b981" />} {sub}
+        </p>
+      </div>
+    </Link>
+  );
 }

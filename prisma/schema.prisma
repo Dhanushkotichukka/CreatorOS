@@ -3,9 +3,8 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url = env("POSTGRES_PRISMA_URL") // uses connection pooling
-  directUrl = env("POSTGRES_URL_NON_POOLING") // uses a direct connection
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
 }
 
 model User {
@@ -30,9 +29,23 @@ model User {
   posts          Post[]
   aiReports      AIReport[]
   communityPosts CommunityPost[]
+  // Engagement & Gamification
+  creatorScore   Int       @default(0)
+  streakCount    Int       @default(0)
+  lastPostedAt   DateTime?
+  
+  // Relations
+  videoInsights   VideoInsight[]
+  instagramInsights InstagramInsight[]
+  communityGroups CommunityGroup[]
+  groupMemberships CommunityMember[]
+  
+  // Custom Relations (Restored)
+  // posts, aiReports, communityPosts are already defined above or consolidated.
   channelStats   ChannelStats[]
-
-  // Legacy/Simple Social Connection Fields (Optional: Can keep for backward compat or migrate)
+  comments       CommunityComment[]
+  
+  // Legacy/Simple Social Connection Fields (Optional)
   youtubeChannelId String?
   youtubeHandle    String?
   youtubeStats     String? // JSON String
@@ -41,7 +54,7 @@ model User {
   instagramStats   String? // JSON String
 }
 
-// NextAuth Models
+// NextAuth Models (Restored)
 model Account {
   id                String  @id @default(cuid())
   userId            String
@@ -55,7 +68,7 @@ model Account {
   scope             String?
   id_token          String?
   session_state     String?
-
+  
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -83,7 +96,7 @@ model VerificationToken {
   @@unique([identifier, token])
 }
 
-// Deep Analytics Models
+// Deep Analytics Models (Restored)
 model ChannelStats {
   id        String   @id @default(uuid())
   userId    String
@@ -123,10 +136,93 @@ model AIReport {
   createdAt DateTime @default(now())
 }
 
+// ---------------------------------------------------------
+// NEW V2.0 MODELS
+// ---------------------------------------------------------
+
+model InstagramInsight {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  
+  date      DateTime @default(now())
+  
+  // Profile Stats
+  followers Int
+  reach     Int      @default(0)
+  impressions Int    @default(0)
+  profileViews Int   @default(0)
+  
+  // Content JSON
+  topMedia  String?  // JSON string of top performing posts
+}
+
+model VideoInsight {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  
+  videoId   String
+  title     String
+  platform  String   // "youtube" or "instagram"
+  
+  // AI Analysis
+  viralScore      Int      @default(0) // 0-100
+  thumbnailScore  Int      @default(0) // 0-100
+  hookStrength    String?  // "Weak", "Good", "Viral"
+  improvementTips String?  // AI generated advice
+  
+  createdAt DateTime @default(now())
+}
+
+model CommunityGroup {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  isPrivate   Boolean  @default(false)
+  creatorId   String
+  creator     User     @relation(fields: [creatorId], references: [id])
+  
+  members     CommunityMember[]
+  posts       CommunityPost[]
+  
+  createdAt   DateTime @default(now())
+}
+
+model CommunityMember {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  groupId   String
+  group     CommunityGroup @relation(fields: [groupId], references: [id])
+  role      String   @default("member") // "admin", "member"
+  joinedAt  DateTime @default(now())
+
+  @@unique([userId, groupId])
+}
+
 model CommunityPost {
   id        String   @id @default(uuid())
   content   String
   likes     Int      @default(0)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  
+  // V2.0 Group Logic
+  groupId   String?
+  group     CommunityGroup? @relation(fields: [groupId], references: [id])
+  visibility String  @default("public") // "public", "group"
+  
+  comments  CommunityComment[]
+  
+  createdAt DateTime @default(now())
+}
+
+model CommunityComment {
+  id        String   @id @default(uuid())
+  content   String
+  postId    String
+  post      CommunityPost @relation(fields: [postId], references: [id], onDelete: Cascade)
   userId    String
   user      User     @relation(fields: [userId], references: [id])
   createdAt DateTime @default(now())

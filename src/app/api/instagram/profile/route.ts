@@ -18,14 +18,7 @@ export async function GET() {
         });
 
         if (!account || !account.access_token) {
-            // Demo Mode: Return mock data if not connected
-            return NextResponse.json({
-                username: session.user.name?.replace(/\s/g, '').toLowerCase() || 'creator_os',
-                profile_picture_url: session.user.image || '',
-                followers: 12500,
-                media_count: 48,
-                biography: 'Content Creator | Tech Enthusiast | Powered by CreatorOS 🚀 (Demo Mode)'
-            });
+            return NextResponse.json({ error: 'Instagram not connected' }, { status: 404 });
         }
 
         const igId = account.providerAccountId;
