@@ -95,8 +95,9 @@ export async function GET(req: Request) {
 
         return NextResponse.redirect(new URL('/creator/connect?success=instagram_connected', req.url));
 
-    } catch (error) {
+    } catch (error: any) {
         console.error('Instagram Callback Error:', error);
-        return NextResponse.redirect(new URL('/creator/connect?error=server_error', req.url));
+        const debugInfo = encodeURIComponent(error.message || 'Unknown error');
+        return NextResponse.redirect(new URL(`/creator/connect?error=server_error&debug=${debugInfo}`, req.url));
     }
 }
