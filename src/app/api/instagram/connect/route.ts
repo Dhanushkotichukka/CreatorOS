@@ -11,7 +11,7 @@ export async function GET() {
         return NextResponse.json({ error: 'Meta App ID not configured' }, { status: 500 });
     }
 
-    const url = `https://www.facebook.com/v18.0/dialog/oauth?client_id=${appId}&redirect_uri=${redirectUri}&scope=${scopes}&response_type=code`;
+    const url = `https://www.facebook.com/v18.0/dialog/oauth?client_id=${appId}&redirect_uri=${redirectUri}&scope=${scopes}&response_type=code&auth_type=rerequest`;
 
     return NextResponse.redirect(url);
 }
