@@ -33,14 +33,34 @@ export async function GET(req: Request) {
 
         const accessToken = tokenData.access_token;
 
-        // 2. Identify the Instagram Business Account
-        const accountsRes = await fetch(`https://graph.facebook.com/v18.0/me/accounts?fields=instagram_business_account{id,username,profile_picture_url}&access_token=${accessToken}`);
-        const accountsData = await accountsRes.json();
+        // 2. Identify the Instagram Business Account (Handle Pagination)
+        let pageWithIg = null;
+        let url = `https://graph.facebook.com/v18.0/me/accounts?fields=name,instagram_business_account{id,username,profile_picture_url}&access_token=${accessToken}&limit=100`;
 
-        // Find first page with a connected IG business account
-        const pageWithIg = accountsData.data?.find((p: any) => p.instagram_business_account);
+        while (url && !pageWithIg) {
+            const accountsRes = await fetch(url);
+            const accountsData = await accountsRes.json();
+
+            if (accountsData.error) {
+                console.error('Meta API Error:', accountsData.error);
+                throw new Error(accountsData.error.message);
+            }
+
+            if (accountsData.data && accountsData.data.length > 0) {
+                // Log pages found for debugging
+                console.log(`Found ${accountsData.data.length} pages:`, accountsData.data.map((p: any) => p.name));
+
+                pageWithIg = accountsData.data.find((p: any) => p.instagram_business_account);
+            }
+
+            if (pageWithIg) break;
+
+            // Next page
+            url = accountsData.paging?.next || null;
+        }
 
         if (!pageWithIg) {
+            console.error('No Instagram Business Account found across all pages.');
             return NextResponse.redirect(new URL('/creator/connect?error=no_instagram_business_account', req.url));
         }
 
