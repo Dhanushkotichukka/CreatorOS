@@ -237,3 +237,16 @@ function StatBox({ label, value }: { label: string, value: string | number }) {
     </div>
   );
 }
+
+function getErrorMessage(code: string) {
+  switch (code) {
+    case 'instagram_auth_failed':
+      return "Authentication failed. Please try again.";
+    case 'no_instagram_business_account':
+      return "We couldn't find an Instagram Business account linked to your Facebook page. Please make sure you have converted your Instagram to a Business/Creator account and linked it to a Facebook Page.";
+    case 'server_error':
+      return "A server error occurred. Please try again later.";
+    default:
+      return "An unknown error occurred. Please try again.";
+  }
+}
