@@ -6,6 +6,8 @@ import { prisma } from '@/lib/prisma';
 const apiKey = process.env.GEMINI_API_KEY;
 const genAI = apiKey ? new GoogleGenerativeAI(apiKey) : null;
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(req: Request) {
     const session = await auth();
     if (!session || !session.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
