@@ -16,6 +16,20 @@ export default function CreatorDashboard() {
         try {
             const res = await fetch('/api/dashboard/overview');
             const data = await res.json();
+            
+            // Fetch YouTube Videos separately if connected
+            if (data.youtube?.connected) {
+                try {
+                    const ytRes = await fetch('/api/youtube/channel');
+                    if (ytRes.ok) {
+                        const ytData = await ytRes.json();
+                        data.youtube.recentVideos = ytData.videos?.slice(0, 3) || [];
+                    }
+                } catch (e) {
+                    console.error("Failed to fetch youtube videos for dashboard", e);
+                }
+            }
+
             setStats(data);
         } catch (error) {
             console.error(error);
@@ -120,42 +134,78 @@ export default function CreatorDashboard() {
         </div>
 
         {/* Recent Activity Section */}
-        <div style={{ gridColumn: 'span 12', marginTop: '1rem' }}>
-            <h3 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <Instagram size={24} color="#ec4899" /> Recent Instagram Activity
-            </h3>
+        <div style={{ gridColumn: 'span 12', marginTop: '1rem', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
             
-            {stats?.instagram?.recentMedia && stats.instagram.recentMedia.length > 0 ? (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1.5rem' }}>
-                    {stats.instagram.recentMedia.map((post: any) => (
-                        <div key={post.id} className="glass-panel card-hover" style={{ padding: '1rem', display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                            {post.media_url ? (
-                                <img src={post.media_url} alt="Post" style={{ width: '80px', height: '80px', objectFit: 'cover', borderRadius: '8px' }} />
-                            ) : (
-                                <div style={{ width: '80px', height: '80px', background: '#333', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                    <Instagram size={24} />
+            {/* Instagram Activity */}
+            <div>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <Instagram size={20} color="#ec4899" /> Recent Instagram Posts
+                </h3>
+                {stats?.instagram?.recentMedia && stats.instagram.recentMedia.length > 0 ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                        {stats.instagram.recentMedia.map((post: any) => (
+                            <div key={post.id} className="glass-panel card-hover" style={{ padding: '1rem', display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                                {post.media_url ? (
+                                    <img src={post.media_url} alt="Post" style={{ width: '60px', height: '60px', objectFit: 'cover', borderRadius: '8px' }} />
+                                ) : (
+                                    <div style={{ width: '60px', height: '60px', background: '#333', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                        <Instagram size={24} />
+                                    </div>
+                                )}
+                                <div style={{ flex: 1, overflow: 'hidden' }}>
+                                    <p style={{ fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.25rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                        {post.caption || 'No Caption'}
+                                    </p>
+                                    <div style={{ display: 'flex', gap: '1rem', fontSize: '0.75rem', color: '#a1a1aa' }}>
+                                        <span>❤️ {post.like_count}</span>
+                                        <span>💬 {post.comments_count}</span>
+                                    </div>
                                 </div>
-                            )}
-                            <div>
-                                <p style={{ fontSize: '0.9rem', fontWeight: 600, marginBottom: '0.25rem', display: '-webkit-box', WebkitLineClamp: 1, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                                    {post.caption || 'No Caption'}
-                                </p>
-                                <div style={{ display: 'flex', gap: '1rem', fontSize: '0.8rem', color: '#a1a1aa' }}>
-                                    <span>❤️ {post.like_count}</span>
-                                    <span>💬 {post.comments_count}</span>
-                                </div>
-                                <p style={{ fontSize: '0.75rem', color: '#52525b', marginTop: '0.25rem' }}>
-                                    {new Date(post.timestamp).toLocaleDateString()}
-                                </p>
                             </div>
-                        </div>
-                    ))}
-                </div>
-            ) : (
-                <div className="glass-panel" style={{ padding: '2rem', textAlign: 'center', color: '#a1a1aa' }}>
-                    No recent activity found. Connect Instagram to see your latest posts here.
-                </div>
-            )}
+                        ))}
+                    </div>
+                ) : (
+                    <div className="glass-panel" style={{ padding: '2rem', textAlign: 'center', color: '#a1a1aa' }}>
+                        No recent Instagram activity.
+                    </div>
+                )}
+            </div>
+
+            {/* YouTube Activity */}
+            <div>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <Youtube size={20} color="#ff0000" /> Recent Uploads
+                </h3>
+                {stats?.youtube?.recentVideos && stats.youtube.recentVideos.length > 0 ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                        {stats.youtube.recentVideos.map((video: any) => (
+                            <div key={video.id} className="glass-panel card-hover" style={{ padding: '1rem', display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                                {video.thumbnail ? (
+                                    <img src={video.thumbnail} alt="Video" style={{ width: '100px', height: '60px', objectFit: 'cover', borderRadius: '8px' }} />
+                                ) : (
+                                    <div style={{ width: '100px', height: '60px', background: '#333', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                        <Youtube size={24} />
+                                    </div>
+                                )}
+                                <div style={{ flex: 1, overflow: 'hidden' }}>
+                                    <p style={{ fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.25rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                        {video.title}
+                                    </p>
+                                    <div style={{ display: 'flex', gap: '1rem', fontSize: '0.75rem', color: '#a1a1aa' }}>
+                                        <span>👁️ {parseInt(video.views).toLocaleString()}</span>
+                                        <span>❤️ {parseInt(video.likes).toLocaleString()}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                ) : (
+                    <div className="glass-panel" style={{ padding: '2rem', textAlign: 'center', color: '#a1a1aa' }}>
+                        {stats?.youtube?.connected ? "Loading videos..." : "Connect YouTube to see uploads."}
+                    </div>
+                )}
+            </div>
+
         </div>
       </div>
     </div>

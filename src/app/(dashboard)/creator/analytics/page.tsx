@@ -35,26 +35,44 @@ export default function AnalyticsLab() {
         
         setData(results);
 
-        // Fetch Detailed AI Improvement Analysis
+
+        // Fetch Detailed AI Improvement Analysis & Suggestions
         try {
             const aiRes = await fetch('/api/ai/improvementAnalysis', {
                 method: 'POST',
                 body: JSON.stringify({ platform, stats: results })
             });
             const aiData = await aiRes.json();
-            setImprovementData(aiData);
+            
+            // Also fetch specific content suggestions
+            const suggestRes = await fetch('/api/ai/contentSuggestions', {
+                method: 'POST',
+                body: JSON.stringify({ 
+                    platform, 
+                    history: platform === 'youtube' ? results.videos : results.posts 
+                })
+            });
+            const suggestData = await suggestRes.json();
+
+            setImprovementData({ ...aiData, suggestions: suggestData.suggestions });
         } catch (e) {
             console.error("AI Analysis failed", e);
-            // Fallback mock for demo if AI fails
+            // Fallback mock
             setImprovementData({
                 score: 78,
                 summary: "Your content is engaging, but consistency needs work.",
                 strategy: { postingFrequency: "3x / week", bestTime: "10 AM EST", contentFocus: "Educational" },
                 actions: [{ title: "Post Reels", description: "Reels are getting 2x more engagement." }],
                 strengths: ["Visuals", "Hooks"],
-                weaknesses: ["Call to Action"]
+                weaknesses: ["Call to Action"],
+                suggestions: [
+                    { title: "Day in the Life", reason: "High engagement on personal stories.", scriptHook: "Start with a chaotic moment." },
+                    { title: "Tutorial: Advanced Tips", reason: "Educational content saves are high.", scriptHook: "Stop doing X, do Y instead." },
+                    { title: "Industry News Reaction", reason: "Timeliness drives views.", scriptHook: "Did you hear about [News]?" }
+                ]
             });
         }
+
 
     } catch (error) {
         console.error(error);
@@ -240,6 +258,32 @@ export default function AnalyticsLab() {
                 </ResponsiveContainer>
             </div>
         </div>
+
+      {/* AI Content Suggestions */}
+      <div className="glass-panel" style={{ padding: '2rem', marginBottom: '3rem', background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.05) 0%, rgba(0,0,0,0) 100%)' }}>
+        <h3 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <Sparkles size={24} color="#8b5cf6" /> Next Viral Video Ideas
+        </h3>
+        {loading ? (
+            <div className="animate-pulse" style={{ height: '100px', background: 'rgba(255,255,255,0.05)', borderRadius: '1rem' }}></div>
+        ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
+                {improvementData?.suggestions?.map((idea: any, i: number) => (
+                    <div key={i} className="glass-card" style={{ padding: '1.5rem', borderLeft: '4px solid #8b5cf6' }}>
+                        <h4 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '0.5rem', color: '#fff' }}>{idea.title}</h4>
+                        <p style={{ fontSize: '0.9rem', color: '#a1a1aa', marginBottom: '1rem' }}>{idea.reason}</p>
+                        <div style={{ background: 'rgba(139, 92, 246, 0.1)', padding: '0.75rem', borderRadius: '0.5rem', fontSize: '0.85rem', color: '#c4b5fd' }}>
+                            <strong>Hook:</strong> {idea.scriptHook}
+                        </div>
+                    </div>
+                )) || (
+                    <div style={{ gridColumn: '1 / -1', textAlign: 'center', color: '#a1a1aa' }}>
+                        Click "Unlock Growth Plan" above to generate ideas.
+                    </div>
+                )}
+            </div>
+        )}
+      </div>
 
       {/* Content Grid */}
       <h3 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '1.5rem' }}>

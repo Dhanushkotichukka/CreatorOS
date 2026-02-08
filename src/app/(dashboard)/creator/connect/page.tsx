@@ -68,15 +68,20 @@ export default function Connect() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ provider })
         });
+        
+        const data = await res.json();
+
         if (res.ok) {
-            if (provider === 'google') setChannelData(null); // google is the provider name for YouTube
+            if (provider === 'google' || provider === 'youtube') setChannelData(null);
             if (provider === 'instagram') setInstagramData(null);
+            // Force a refresh of the page to ensure all states are cleared
+            router.refresh();
         } else {
-            alert('Failed to disconnect');
+            alert(data.error || 'Failed to disconnect');
         }
     } catch (e) {
         console.error(e);
-        alert('An error occurred');
+        alert('An error occurred during disconnection');
     } finally {
         setLoading(false);
     }
