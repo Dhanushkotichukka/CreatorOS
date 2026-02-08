@@ -1,38 +1,61 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/auth';
-
-// Simulated DB
-let communityPosts = [
-    { id: '1', author: 'Sarah Creator', content: 'Just hit 10k subs! Thanks for the tips everyone. 🚀', likes: 12, replies: [], timestamp: new Date().toISOString() },
-    { id: '2', author: 'TechGuru', content: 'Anyone else seeing a drop in Shorts views this week?', likes: 5, replies: [], timestamp: new Date(Date.now() - 86400000).toISOString() }
-];
+import { prisma } from '@/lib/prisma';
 
 export async function GET() {
-    return NextResponse.json(communityPosts);
+    try {
+        const posts = await prisma.communityPost.findMany({
+            orderBy: { createdAt: 'desc' },
+            include: { user: { select: { name: true, image: true } } }
+        });
+
+        // Transform for frontend
+        const formatted = posts.map(p => ({
+            id: p.id,
+            author: p.user.name || 'Anonymous',
+            authorImage: p.user.image,
+            content: p.content,
+            likes: p.likes,
+            replies: [], // TODO: Add replies table later
+            timestamp: p.createdAt
+        }));
+
+        return NextResponse.json(formatted);
+    } catch (error) {
+        return NextResponse.json({ error: 'Failed to fetch community posts' }, { status: 500 });
+    }
 }
 
 export async function POST(req: Request) {
     const session = await auth();
-    if (!session) {
+    if (!session || !session.user?.id) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     try {
         const { content } = await req.json();
-        const newPost = {
-            id: Math.random().toString(36).substring(7),
-            author: session.user?.name || 'Anonymous Creator',
-            content,
-            likes: 0,
-            replies: [],
-            timestamp: new Date().toISOString()
-        };
 
-        // In real app: await prisma.communityPost.create(...)
-        communityPosts.unshift(newPost);
+        const post = await prisma.communityPost.create({
+            data: {
+                content,
+                userId: session.user.id,
+                likes: 0
+            },
+            include: { user: { select: { name: true, image: true } } }
+        });
 
-        return NextResponse.json(newPost);
+        return NextResponse.json({
+            id: post.id,
+            author: post.user.name || 'Anonymous',
+            authorImage: post.user.image,
+            content: post.content,
+            likes: post.likes,
+            timestamp: post.createdAt,
+            replies: []
+        });
+
     } catch (error) {
+        console.error(error);
         return NextResponse.json({ error: 'Failed to post' }, { status: 500 });
     }
 }
