@@ -73,7 +73,10 @@ export default function Sidebar() {
         }}>
           <Sparkles size={20} color="white" />
         </div>
-        <span style={{ fontSize: '1.25rem', fontWeight: 800, letterSpacing: '-0.02em' }}>CreatorOS</span>
+        <div>
+            <span style={{ fontSize: '1.25rem', fontWeight: 800, letterSpacing: '-0.02em', display: 'block', lineHeight: 1 }}>CreatorOS</span>
+            <span style={{ fontSize: '0.65rem', color: '#a1a1aa', letterSpacing: '0.1em' }}>v2.0.1 PRO</span>
+        </div>
       </div>
 
       <nav style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
