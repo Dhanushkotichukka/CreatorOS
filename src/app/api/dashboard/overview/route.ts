@@ -15,11 +15,11 @@ export async function GET() {
             include: {
                 channelStats: {
                     orderBy: { date: 'desc' },
-                    take: 1
+                    take: 2
                 },
                 instagramInsights: {
                     orderBy: { date: 'desc' },
-                    take: 1
+                    take: 2
                 }
             }
         });
@@ -46,12 +46,6 @@ export async function GET() {
         // ---------------------------------------------------------
         // 2. Calculate Creator Health Score (0-100)
         // ---------------------------------------------------------
-        // Base: 50
-        // +10 for connecting YouTube
-        // +10 for connecting Instagram
-        // +5 per streak day (cap 20)
-        // +10 if posted this week
-
         let healthScore = 50;
         const ytConnected = user.channelStats.length > 0;
         const igConnected = user.instagramInsights.length > 0;
@@ -64,20 +58,59 @@ export async function GET() {
         if (healthScore > 100) healthScore = 100;
 
         // ---------------------------------------------------------
-        // 3. Platform Summaries
+        // 3. Platform Summaries (With Real Growth)
         // ---------------------------------------------------------
+
+        // YouTube Calculation
+        let ytGrowth = "+0%";
+        if (user.channelStats.length >= 2) {
+            const curr = user.channelStats[0].followers;
+            const prev = user.channelStats[1].followers;
+            if (prev > 0) {
+                const diff = ((curr - prev) / prev) * 100;
+                ytGrowth = (diff >= 0 ? '+' : '') + diff.toFixed(1) + '%';
+            }
+        }
+
         const youtube = ytConnected ? {
             connected: true,
             subscribers: user.channelStats[0].followers,
             views: user.channelStats[0].views,
-            growth: '+1.2%' // Placeholder for real calculation
+            growth: ytGrowth
         } : { connected: false };
+
+        // Instagram Calculation
+        let igGrowth = "+0%";
+        let recentMediaCount = 0;
+        let recentMedia = [];
+
+        if (user.instagramInsights.length > 0) {
+            const latest = user.instagramInsights[0];
+            try {
+                if (latest.topMedia) {
+                    recentMedia = JSON.parse(latest.topMedia);
+                    recentMediaCount = recentMedia.length;
+                }
+            } catch (e) {
+                console.error("Failed to parse topMedia", e);
+            }
+
+            if (user.instagramInsights.length >= 2) {
+                const curr = latest.followers;
+                const prev = user.instagramInsights[1].followers;
+                if (prev > 0) {
+                    const diff = ((curr - prev) / prev) * 100;
+                    igGrowth = (diff >= 0 ? '+' : '') + diff.toFixed(1) + '%';
+                }
+            }
+        }
 
         const instagram = igConnected ? {
             connected: true,
-            followers: user.instagramInsights[0].followers,
-            mediaCount: JSON.parse(user.instagramInsights[0].topMedia || '[]').length,
-            growth: '+0.5%'
+            followers: user.instagramInsights[0].followers || 0,
+            mediaCount: user.instagramInsights[0].impressions || 0, // Showing impressions as the secondary stat
+            growth: igGrowth,
+            recentMedia: recentMedia.slice(0, 3) // Send top 3 posts for UI
         } : { connected: false };
 
         return NextResponse.json({

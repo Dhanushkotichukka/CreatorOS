@@ -198,6 +198,49 @@ export default function AnalyticsLab() {
         )}
       </div>
 
+        {/* Growth Chart */}
+        <div style={{ marginBottom: '4rem' }}>
+            <h3 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '1.5rem' }}>
+                {platform === 'youtube' ? 'Upload Performance' : 'Recent Engagement'}
+            </h3>
+            <div className="glass-panel" style={{ padding: '2rem', height: '400px' }}>
+                <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={platform === 'youtube' ? (data?.videos || []).slice().reverse() : (data?.posts || []).slice().reverse()}>
+                        <defs>
+                            <linearGradient id="chartColor" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor={platform === 'youtube' ? '#ff0000' : '#E1306C'} stopOpacity={0.8}/>
+                                <stop offset="95%" stopColor={platform === 'youtube' ? '#ff0000' : '#E1306C'} stopOpacity={0}/>
+                            </linearGradient>
+                        </defs>
+                        <XAxis 
+                            dataKey={platform === 'youtube' ? 'title' : 'caption'} 
+                            tick={{ fill: '#71717a', fontSize: 10 }}
+                            tickFormatter={(value) => value ? value.substring(0, 10) + '...' : ''}
+                            axisLine={false}
+                            tickLine={false}
+                        />
+                        <YAxis 
+                            tick={{ fill: '#71717a', fontSize: 12 }} 
+                            axisLine={false}
+                            tickLine={false}
+                            tickFormatter={(value) => `${value}`}
+                        />
+                        <Tooltip 
+                            contentStyle={{ backgroundColor: '#18181b', border: '1px solid #27272a', borderRadius: '8px' }}
+                            itemStyle={{ color: '#fff' }}
+                            cursor={{ fill: 'rgba(255,255,255,0.05)' }}
+                        />
+                        <Bar 
+                            dataKey={platform === 'youtube' ? 'views' : 'like_count'} 
+                            fill="url(#chartColor)" 
+                            radius={[4, 4, 0, 0]} 
+                            barSize={40}
+                        />
+                    </BarChart>
+                </ResponsiveContainer>
+            </div>
+        </div>
+
       {/* Content Grid */}
       <h3 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '1.5rem' }}>
           {platform === 'youtube' ? 'Recent Videos' : 'Recent Posts'}

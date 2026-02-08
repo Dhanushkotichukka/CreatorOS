@@ -104,7 +104,7 @@ export default function CreatorDashboard() {
                 connected={stats?.instagram?.connected}
             />
 
-            {/* AI Insight Card */}
+        {/* AI Insight Card */}
             <div className="glass-panel" style={{ gridColumn: 'span 2', padding: '1.5rem', display: 'flex', alignItems: 'center', gap: '1.5rem', background: 'linear-gradient(90deg, rgba(139, 92, 246, 0.1) 0%, rgba(0,0,0,0) 100%)' }}>
                 <div style={{ width: '50px', height: '50px', borderRadius: '12px', background: '#8b5cf6', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                     <Sparkles color="white" size={24} />
@@ -117,6 +117,45 @@ export default function CreatorDashboard() {
                     View Plan <ArrowRight size={16} />
                 </button>
             </div>
+        </div>
+
+        {/* Recent Activity Section */}
+        <div style={{ gridColumn: 'span 12', marginTop: '1rem' }}>
+            <h3 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <Instagram size={24} color="#ec4899" /> Recent Instagram Activity
+            </h3>
+            
+            {stats?.instagram?.recentMedia && stats.instagram.recentMedia.length > 0 ? (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1.5rem' }}>
+                    {stats.instagram.recentMedia.map((post: any) => (
+                        <div key={post.id} className="glass-panel card-hover" style={{ padding: '1rem', display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                            {post.media_url ? (
+                                <img src={post.media_url} alt="Post" style={{ width: '80px', height: '80px', objectFit: 'cover', borderRadius: '8px' }} />
+                            ) : (
+                                <div style={{ width: '80px', height: '80px', background: '#333', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                    <Instagram size={24} />
+                                </div>
+                            )}
+                            <div>
+                                <p style={{ fontSize: '0.9rem', fontWeight: 600, marginBottom: '0.25rem', display: '-webkit-box', WebkitLineClamp: 1, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                                    {post.caption || 'No Caption'}
+                                </p>
+                                <div style={{ display: 'flex', gap: '1rem', fontSize: '0.8rem', color: '#a1a1aa' }}>
+                                    <span>❤️ {post.like_count}</span>
+                                    <span>💬 {post.comments_count}</span>
+                                </div>
+                                <p style={{ fontSize: '0.75rem', color: '#52525b', marginTop: '0.25rem' }}>
+                                    {new Date(post.timestamp).toLocaleDateString()}
+                                </p>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            ) : (
+                <div className="glass-panel" style={{ padding: '2rem', textAlign: 'center', color: '#a1a1aa' }}>
+                    No recent activity found. Connect Instagram to see your latest posts here.
+                </div>
+            )}
         </div>
       </div>
     </div>

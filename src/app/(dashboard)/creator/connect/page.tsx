@@ -1,7 +1,7 @@
 "use client";
 
 import { useAuth } from '@/context/AuthContext';
-import { Youtube, Instagram, CheckCircle, RefreshCw, AlertCircle } from 'lucide-react';
+import { Youtube, Instagram, CheckCircle, RefreshCw, AlertCircle, Trash2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -56,6 +56,30 @@ export default function Connect() {
 
   const handleInstagramConnect = () => {
       window.location.href = '/api/instagram/connect';
+  };
+
+  const handleDisconnect = async (provider: string) => {
+    if(!confirm(`Are you sure you want to disconnect ${provider}?`)) return;
+
+    setLoading(true);
+    try {
+        const res = await fetch('/api/auth/disconnect', {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ provider })
+        });
+        if (res.ok) {
+            if (provider === 'google') setChannelData(null); // google is the provider name for YouTube
+            if (provider === 'instagram') setInstagramData(null);
+        } else {
+            alert('Failed to disconnect');
+        }
+    } catch (e) {
+        console.error(e);
+        alert('An error occurred');
+    } finally {
+        setLoading(false);
+    }
   };
 
   return (
@@ -124,15 +148,26 @@ export default function Connect() {
                     <StatBox label="Videos" value={parseInt(channelData.videoCount).toLocaleString()} />
                   </div>
                   
-                  <button 
-                    onClick={fetchYouTube}
-                    disabled={loading}
-                    className="btn-primary"
-                    style={{ width: '100%', display: 'flex', justifyContent: 'center', gap: '0.5rem' }}
-                  >
-                    <RefreshCw size={18} className={loading ? 'spin' : ''} />
-                    Refresh YouTube Data
-                  </button>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
+                    <button 
+                        onClick={fetchYouTube}
+                        disabled={loading}
+                        className="btn-secondary"
+                        style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem', alignItems: 'center' }}
+                    >
+                        <RefreshCw size={16} className={loading ? 'spin' : ''} />
+                        Refresh
+                    </button>
+                    <button 
+                        onClick={() => handleDisconnect('google')}
+                        disabled={loading}
+                        className="btn-secondary"
+                        style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#fca5a5', border: '1px solid rgba(239, 68, 68, 0.2)', display: 'flex', justifyContent: 'center', gap: '0.5rem', alignItems: 'center' }}
+                    >
+                        <Trash2 size={16} />
+                        Disconnect
+                    </button>
+                  </div>
                 </>
               ) : (
                 <>
@@ -194,15 +229,26 @@ export default function Connect() {
                       <StatBox label="Reach" value={instagramData.reach?.toLocaleString() || '-'} />
                    </div>
 
-                   <button 
-                      onClick={fetchInstagram}
-                      disabled={loading}
-                      className="btn-primary"
-                      style={{ width: '100%', display: 'flex', justifyContent: 'center', gap: '0.5rem', background: 'linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%)', border: 'none' }}
-                   >
-                      <RefreshCw size={18} className={loading ? 'spin' : ''} />
-                      Refresh Instagram Data
-                   </button>
+                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
+                    <button 
+                        onClick={fetchInstagram}
+                        disabled={loading}
+                        className="btn-secondary"
+                        style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem', alignItems: 'center' }}
+                    >
+                        <RefreshCw size={16} className={loading ? 'spin' : ''} />
+                        Refresh
+                    </button>
+                    <button 
+                        onClick={() => handleDisconnect('instagram')}
+                        disabled={loading}
+                        className="btn-secondary"
+                        style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#fca5a5', border: '1px solid rgba(239, 68, 68, 0.2)', display: 'flex', justifyContent: 'center', gap: '0.5rem', alignItems: 'center' }}
+                    >
+                        <Trash2 size={16} />
+                        Disconnect
+                    </button>
+                  </div>
                  </>
                ) : (
                   <>
