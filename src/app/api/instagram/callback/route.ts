@@ -65,10 +65,17 @@ export async function GET(req: Request) {
             url = accountsData.paging?.next || null;
         }
 
+        // Check Permissions if no pages found
         if (!pageWithIg) {
             console.error('No Instagram Business Account found across all pages.');
+
+            // Debug: Check what permissions we actually got
+            const permRes = await fetch(`https://graph.facebook.com/v18.0/me/permissions?access_token=${accessToken}`);
+            const permData = await permRes.json();
+            const granted = permData.data?.filter((p: any) => p.status === 'granted').map((p: any) => p.permission).join(', ') || 'None';
+
             const debugNames = allPageNames.join(', ') || 'None';
-            const debugInfo = encodeURIComponent(`Found ${totalPagesFound} pages: ${debugNames}. None had 'instagram_business_account' field. Check 'Linked Accounts' in FB Page Settings.`);
+            const debugInfo = encodeURIComponent(`Found ${totalPagesFound} pages: ${debugNames}. Permissions: ${granted}. Check if 'pages_show_list' is granted.`);
             return NextResponse.redirect(new URL(`/creator/connect?error=no_instagram_business_account&debug=${debugInfo}`, req.url));
         }
 
