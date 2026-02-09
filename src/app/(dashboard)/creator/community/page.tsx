@@ -18,15 +18,18 @@ export default function CommunityHub() {
   const [groupDesc, setGroupDesc] = useState('');
   const [isPrivate, setIsPrivate] = useState(false);
 
+  const [publicGroups, setPublicGroups] = useState<any[]>([]);
+
   useEffect(() => {
     fetchCommunityData();
   }, []);
 
   async function fetchCommunityData() {
       try {
-          const [postsRes, groupsRes] = await Promise.all([
+          const [postsRes, groupsRes, publicRes] = await Promise.all([
               fetch('/api/community?type=feed'), 
-              fetch('/api/community/groups/list')       
+              fetch('/api/community/groups/list'),
+              fetch('/api/community/groups/public')
           ]);
           
           if (postsRes.ok) {
@@ -37,10 +40,33 @@ export default function CommunityHub() {
               const gData = await groupsRes.json();
               if (Array.isArray(gData)) setGroups(gData);
           }
+          if (publicRes.ok) {
+              const pData = await publicRes.json();
+              if (Array.isArray(pData)) setPublicGroups(pData);
+          }
       } catch (error) {
           console.error(error);
       } finally {
           setLoading(false);
+      }
+  }
+
+  async function handleJoinGroup(groupId: string) {
+      if (!confirm('Join this group?')) return;
+      try {
+          const res = await fetch('/api/community/groups/join', {
+              method: 'POST',
+              body: JSON.stringify({ groupId })
+          });
+          if (res.ok) {
+              alert('Joined successfully!');
+              fetchCommunityData(); // Refresh everything
+          } else {
+              const err = await res.json();
+              alert(err.error || 'Failed to join');
+          }
+      } catch (error) {
+          console.error(error);
       }
   }
 
@@ -272,19 +298,27 @@ export default function CommunityHub() {
               Suggested Groups
           </h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              {/* Mock suggestions for now */}
-              {[1,2].map((i) => (
-                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                      <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: '#27272a', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                          <Hash size={16} className='text-zinc-500' />
+              {publicGroups.map((group) => (
+                  <div key={group.id} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                      <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: '#27272a', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                          {group.imageUrl ? <img src={group.imageUrl} alt={group.name} /> : <Hash size={16} className='text-zinc-500' />}
                       </div>
-                      <div style={{ flex: 1 }}>
-                          <p style={{ fontSize: '0.9rem', fontWeight: 600 }}>Creator Talk {i}</p>
-                          <p style={{ fontSize: '0.75rem', color: '#71717a' }}>Public Group</p>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                          <p style={{ fontSize: '0.9rem', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{group.name}</p>
+                          <p style={{ fontSize: '0.75rem', color: '#71717a' }}>Public • {group._count?.members || 0} Members</p>
                       </div>
-                      <button className="btn-ghost" style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem' }}>Join</button>
+                      <button 
+                        onClick={() => handleJoinGroup(group.id)}
+                        className="btn-ghost" 
+                        style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem', color: '#10b981' }}
+                      >
+                        Join
+                      </button>
                   </div>
               ))}
+              {publicGroups.length === 0 && (
+                  <p style={{ fontSize: '0.8rem', color: '#52525b' }}>No new public groups found.</p>
+              )}
           </div>
       </div>
     </div>

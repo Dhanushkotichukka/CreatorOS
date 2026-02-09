@@ -32,21 +32,28 @@ export default function Connect() {
       if (res.ok) {
         const data = await res.json();
         setChannelData(data);
+      } else {
+        setChannelData(null);
       }
     } catch (e) {
       console.error(e);
+      setChannelData(null);
     }
   };
 
   const fetchInstagram = async () => {
     try {
-      const res = await fetch('/api/instagram/profile');
+      // Add timestamp to prevent browser caching
+      const res = await fetch(`/api/instagram/profile?t=${Date.now()}`);
       if (res.ok) {
         const data = await res.json();
         setInstagramData(data);
+      } else {
+        setInstagramData(null);
       }
     } catch (e) {
       console.error(e);
+      setInstagramData(null);
     }
   };
 

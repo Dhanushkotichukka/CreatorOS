@@ -16,7 +16,13 @@ export async function POST(req: Request) {
         // ---------------------------------------------------------
         // Construct Prompt
         // ---------------------------------------------------------
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        // ---------------------------------------------------------
+        // Construct Prompt
+        // ---------------------------------------------------------
+        const model = genAI.getGenerativeModel({
+            model: "gemini-1.5-flash",
+            generationConfig: { responseMimeType: "application/json" }
+        });
 
         let context = "";
         if (platform === 'youtube') {
@@ -57,8 +63,6 @@ export async function POST(req: Request) {
                 "strengths": [(string), (string)],
                 "weaknesses": [(string), (string)]
             }
-            
-            Do not include markdown formatting like \`\`\`json. Just return the raw JSON string.
         `;
 
         // ---------------------------------------------------------
@@ -66,7 +70,7 @@ export async function POST(req: Request) {
         // ---------------------------------------------------------
         const result = await model.generateContent(prompt);
         const response = await result.response;
-        const text = response.text().replace(/```json/g, '').replace(/```/g, '').trim();
+        const text = response.text();
 
         try {
             const data = JSON.parse(text);

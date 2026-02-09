@@ -2,16 +2,31 @@ import { NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
 import { getBaseUrl } from '@/lib/url';
+import { cookies } from 'next/headers';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET(req: Request) {
+    // strict session check
     const session = await auth();
     if (!session?.user?.id) {
-        return NextResponse.redirect(new URL('/login', req.url));
+        return NextResponse.redirect(new URL('/login?error=unauthorized_connect', req.url));
     }
 
     const { searchParams } = new URL(req.url);
     const code = searchParams.get('code');
     const error = searchParams.get('error');
+    const state = searchParams.get('state');
+
+    // Verify State
+    const storedState = cookies().get('oauth_state')?.value;
+    if (!state || !storedState || state !== storedState) {
+        console.error('OAuth State Mismatch', { received: state, stored: storedState });
+        return NextResponse.redirect(new URL('/creator/connect?error=state_mismatch', req.url));
+    }
+
+    // Clear state cookie
+    cookies().delete('oauth_state');
 
     if (error || !code) {
         return NextResponse.redirect(new URL('/creator/connect?error=instagram_auth_failed', req.url));

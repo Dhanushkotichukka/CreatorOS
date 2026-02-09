@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(req: Request) {
     try {
         const session = await auth();
@@ -9,29 +11,32 @@ export async function GET(req: Request) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
+        // Find public groups where the user is NOT a member
         const groups = await prisma.communityGroup.findMany({
             where: {
+                isPrivate: false,
                 members: {
-                    some: {
+                    none: {
                         userId: session.user.id
                     }
                 }
             },
             include: {
                 _count: {
-                    select: { members: true, posts: true }
-                },
-                members: {
-                    where: { userId: session.user.id },
-                    select: { role: true }
+                    select: { members: true }
                 }
             },
-            orderBy: { updatedAt: 'desc' }
+            orderBy: {
+                members: {
+                    _count: 'desc'
+                }
+            },
+            take: 5
         });
 
         return NextResponse.json(groups);
     } catch (error) {
-        console.error('Error fetching groups:', error);
+        console.error('Error fetching public groups:', error);
         return NextResponse.json({ error: 'Failed to fetch groups' }, { status: 500 });
     }
 }
