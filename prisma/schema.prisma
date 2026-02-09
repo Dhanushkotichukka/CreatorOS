@@ -198,13 +198,6 @@ model CommunityGroup {
   
   members     GroupMember[]
   posts       CommunityPost[]
-  
-  // Inverse relation for potential legacy `communityGroups` on User if we kept it
-  // For now, let's assume `members` covers the relationship to User.
-  // To satisfy `User.communityGroups` if we kept it, we'd need an explicit relation here.
-  // But standard many-to-many via GroupMember is cleaner.
-  // Let's remove this legacy confusion.
-  users       User[] // Implicit many-to-many if needed, but we use GroupMember
 }
 
 model GroupMember {
