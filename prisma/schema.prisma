@@ -46,14 +46,7 @@ model User {
   aiReports      AIReport[]
   videoInsights   VideoInsight[]
   instagramInsights InstagramInsight[]
-  communityGroups CommunityGroup[] // Kept for backward compat if needed, or remove? 
-  // Wait, `communityGroups` (plural) usually implies membership or ownership. 
-  // We have `createdGroups` and `joinedGroups` now. 
-  // Let's remove `communityGroups` and `groupMemberships` to avoid confusion as we are successfully migrating to v2.
-  // But wait, existing code might rely on it? The previous schema had `communityGroups CommunityGroup[]`.
-  // Let's keep `communityGroups` but map it to what? 
-  // Actually, let's keep it simple. Real v2 uses `joinedGroups`.
-  
+
   // Legacy/Simple Social Connection Fields (Optional)
   channelStats   ChannelStats[]
   youtubeChannelId String?
