@@ -184,7 +184,7 @@ model CommunityGroup {
   code        String   @unique // Invite code
   isPrivate   Boolean  @default(true)
   createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt @default(now()) @default(now())
+  updatedAt   DateTime @updatedAt @default(now())
   
   createdById String
   createdBy   User     @relation("CreatedGroups", fields: [createdById], references: [id], onDelete: Cascade)
@@ -213,7 +213,7 @@ model CommunityPost {
   content   String
   imageUrl  String?
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  updatedAt   DateTime @updatedAt @default(now())
   
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -230,7 +230,7 @@ model CommunityComment {
   id        String   @id @default(cuid())
   content   String
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  updatedAt   DateTime @updatedAt @default(now())
   
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
