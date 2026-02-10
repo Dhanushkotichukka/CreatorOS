@@ -58,7 +58,7 @@ export async function GET(req: Request) {
 
         while (url && !pageWithIg) {
             const accountsRes = await fetch(url);
-            const accountsData = await accountsRes.json();
+            const accountsData: any = await accountsRes.json();
 
             if (accountsData.error) {
                 console.error('Meta API Error:', accountsData.error);
