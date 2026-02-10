@@ -1,7 +1,7 @@
 "use client";
 
 import { useAuth } from '@/context/AuthContext';
-import { Youtube, Instagram, CheckCircle, RefreshCw, AlertCircle, Trash2 } from 'lucide-react';
+import { Youtube, Instagram, CheckCircle, RefreshCw, AlertCircle, Trash2, Link as LinkIcon, ExternalLink, BarChart3 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -95,26 +95,29 @@ export default function Connect() {
   };
 
   return (
-    <div className="fade-in-up" style={{ maxWidth: '800px', margin: '0 auto' }}>
-      <header style={{ marginBottom: '3rem' }}>
-        <h1 className="text-gradient" style={{ fontSize: '3rem', fontWeight: 800, marginBottom: '1rem' }}>
+    <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-8 fade-in-up">
+      <header className="mb-12 text-center">
+        <div className="inline-flex items-center justify-center p-3 bg-blue-500/10 rounded-2xl mb-4 ring-1 ring-blue-500/20">
+            <LinkIcon size={32} className="text-blue-400" />
+        </div>
+        <h1 className="text-4xl md:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white to-zinc-500 mb-4">
           Connect & Sync
         </h1>
-        <p style={{ color: '#a1a1aa', fontSize: '1.2rem' }}>
-          Link your accounts to unlock AI-powered insights.
+        <p className="text-xl text-zinc-400 max-w-2xl mx-auto">
+          Link your accounts to unlock AI-powered insights and growth tracking.
         </p>
       </header>
 
       {errorParam && (
-        <div style={{ padding: '1rem', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)', borderRadius: '0.75rem', marginBottom: '2rem', display: 'flex', alignItems: 'start', gap: '0.75rem', color: '#fca5a5' }}>
-            <AlertCircle size={20} style={{ flexShrink: 0, marginTop: '2px' }} />
+        <div className="mb-8 p-4 bg-red-500/10 border border-red-500/20 rounded-xl flex items-start gap-3 text-red-300">
+            <AlertCircle size={20} className="mt-0.5 shrink-0" />
             <div>
-                <p style={{ fontWeight: 600, marginBottom: '0.25rem' }}>Connection Failed</p>
-                <p style={{ fontSize: '0.9rem', opacity: 0.9 }}>
+                <p className="font-bold mb-1">Connection Failed</p>
+                <p className="text-sm opacity-90">
                     {getErrorMessage(errorParam)}
                 </p>
                 {searchParams.get('debug') && (
-                    <div style={{ marginTop: '0.5rem', padding: '0.5rem', background: 'rgba(0,0,0,0.3)', borderRadius: '4px', fontSize: '0.75rem', fontFamily: 'monospace' }}>
+                    <div className="mt-2 p-2 bg-black/30 rounded-lg text-xs font-mono break-all">
                         <strong>Debug Info:</strong> {decodeURIComponent(searchParams.get('debug')!)}
                     </div>
                 )}
@@ -122,165 +125,160 @@ export default function Connect() {
         </div>
       )}
 
-      <div style={{ display: 'grid', gap: '2rem' }}>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        
         {/* YouTube Card */}
-        <div className="glass-panel" style={{ padding: '2rem', position: 'relative', overflow: 'hidden' }}>
-          <div style={{ position: 'absolute', top: 0, right: 0, padding: '1rem', opacity: 0.1 }}>
-            <Youtube size={120} color="#ff0000" />
+        <div className="glass-panel p-8 relative overflow-hidden group">
+          <div className="absolute -top-12 -right-12 p-8 opacity-5 group-hover:opacity-10 transition-all duration-500 transform group-hover:rotate-12 group-hover:scale-110 pointer-events-none">
+            <Youtube size={200} />
           </div>
           
-          <div style={{ display: 'flex', gap: '1.5rem', position: 'relative', zIndex: 1 }}>
-            <div style={{ background: 'rgba(255,0,0,0.1)', padding: '1rem', borderRadius: '1rem', height: 'fit-content' }}>
-              <Youtube size={32} color="#ff0000" />
-            </div>
-            
-            <div style={{ flex: 1 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                <h3 style={{ fontSize: '1.5rem', fontWeight: 700 }}>YouTube Channel</h3>
+          <div className="relative z-10">
+              <div className="flex justify-between items-start mb-6">
+                <div className="p-4 bg-red-600/10 rounded-2xl ring-1 ring-red-600/20">
+                    <Youtube size={32} className="text-red-600" />
+                </div>
                 {channelData && (
-                  <span className="glass-card" style={{ padding: '0.25rem 0.75rem', borderRadius: '2rem', fontSize: '0.8rem', color: '#10b981', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <CheckCircle size={14} /> Connected
+                  <span className="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 border border-emerald-500/20">
+                    <CheckCircle size={12} /> Connected
                   </span>
                 )}
               </div>
+            
+              <h3 className="text-2xl font-bold text-white mb-6">YouTube Channel</h3>
 
               {channelData ? (
                 <>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
-                      <img src={channelData.thumbnail} alt="Profile" style={{ width: '48px', height: '48px', borderRadius: '50%' }} />
+                  <div className="flex items-center gap-4 mb-8">
+                      <img src={channelData.thumbnail} alt="Profile" className="w-16 h-16 rounded-full border-2 border-zinc-800 shadow-xl" />
                       <div>
-                          <p style={{ fontWeight: 700, fontSize: '1.1rem' }}>{channelData.title}</p>
-                          <p style={{ color: '#a1a1aa', fontSize: '0.9rem' }}>{channelData.customUrl}</p>
+                          <p className="font-bold text-lg text-white">{channelData.title}</p>
+                          <p className="text-zinc-500 text-sm">{channelData.customUrl}</p>
                       </div>
                   </div>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', marginBottom: '1.5rem' }}>
+                  <div className="grid grid-cols-3 gap-4 mb-8">
                     <StatBox label="Subscribers" value={parseInt(channelData.subscriberCount).toLocaleString()} />
-                    <StatBox label="Total Views" value={parseInt(channelData.viewCount).toLocaleString()} />
+                    <StatBox label="Views" value={parseInt(channelData.viewCount).toLocaleString()} />
                     <StatBox label="Videos" value={parseInt(channelData.videoCount).toLocaleString()} />
                   </div>
                   
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
+                  <div className="grid grid-cols-2 gap-3">
                     <button 
                         onClick={fetchYouTube}
                         disabled={loading}
-                        className="btn-secondary"
-                        style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem', alignItems: 'center' }}
+                        className="py-2.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-white font-medium text-sm transition-all flex items-center justify-center gap-2"
                     >
-                        <RefreshCw size={16} className={loading ? 'spin' : ''} />
+                        <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
                         Refresh
                     </button>
                     <button 
                         onClick={() => handleDisconnect('google')}
                         disabled={loading}
-                        className="btn-secondary"
-                        style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#fca5a5', border: '1px solid rgba(239, 68, 68, 0.2)', display: 'flex', justifyContent: 'center', gap: '0.5rem', alignItems: 'center' }}
+                        className="py-2.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 font-medium text-sm transition-all flex items-center justify-center gap-2"
                     >
-                        <Trash2 size={16} />
+                        <Trash2 size={14} />
                         Disconnect
                     </button>
                   </div>
                 </>
               ) : (
-                <>
-                   <p style={{ color: '#a1a1aa', marginBottom: '1.5rem' }}>
-                     Connect to fetch videos, analyze performance, and get AI coaching.
+                <div className="min-h-[220px] flex flex-col justify-between">
+                   <p className="text-zinc-400 mb-8 leading-relaxed">
+                     Connect your Google account to fetch video stats, analyze performance trends, and receive AI-powered content coaching.
                    </p>
                    <button 
                      onClick={handleYouTubeConnect}
-                     className="btn-primary"
-                     style={{ background: '#ff0000', border: 'none', width: '100%' }}
+                     className="w-full py-4 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold flex items-center justify-center gap-2 transition-all shadow-lg shadow-red-600/20 hover:shadow-red-600/40 hover:-translate-y-1"
                    >
-                     Connect with Google
+                     <Youtube size={20} /> Connect with Google
                    </button>
-                </>
+                </div>
               )}
-            </div>
           </div>
         </div>
 
         {/* Instagram Card */}
-        <div className="glass-panel" style={{ padding: '2rem', position: 'relative', overflow: 'hidden' }}>
-          <div style={{ position: 'absolute', top: 0, right: 0, padding: '1rem', opacity: 0.1 }}>
-             <Instagram size={120} color="#ec4899" />
+        <div className="glass-panel p-8 relative overflow-hidden group">
+          <div className="absolute -top-12 -right-12 p-8 opacity-5 group-hover:opacity-10 transition-all duration-500 transform group-hover:rotate-12 group-hover:scale-110 pointer-events-none">
+             <Instagram size={200} />
           </div>
 
-          <div style={{ display: 'flex', gap: '1.5rem', position: 'relative', zIndex: 1 }}>
-            <div style={{ background: 'rgba(236, 72, 153, 0.1)', padding: '1rem', borderRadius: '1rem', height: 'fit-content' }}>
-              <Instagram size={32} color="#ec4899" />
-            </div>
-            
-            <div style={{ flex: 1 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                   <h3 style={{ fontSize: '1.5rem', fontWeight: 700 }}>Instagram</h3>
-                   {instagramData && (
-                      <span className="glass-card" style={{ padding: '0.25rem 0.75rem', borderRadius: '2rem', fontSize: '0.8rem', color: '#10b981', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <CheckCircle size={14} /> Connected
-                      </span>
-                   )}
+          <div className="relative z-10">
+              <div className="flex justify-between items-start mb-6">
+                <div className="p-4 bg-pink-600/10 rounded-2xl ring-1 ring-pink-600/20">
+                    <Instagram size={32} className="text-pink-600" />
                 </div>
+                {instagramData && (
+                  <span className="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 border border-emerald-500/20">
+                    <CheckCircle size={12} /> Connected
+                  </span>
+                )}
+              </div>
+
+               <h3 className="text-2xl font-bold text-white mb-6">Instagram</h3>
 
                {instagramData ? (
                  <>
-                   <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
+                   <div className="flex items-center gap-4 mb-8">
                       {instagramData.profile_picture_url ? (
-                          <img src={instagramData.profile_picture_url} alt="Profile" style={{ width: '48px', height: '48px', borderRadius: '50%' }} />
+                          <img src={instagramData.profile_picture_url} alt="Profile" className="w-16 h-16 rounded-full border-2 border-zinc-800 shadow-xl" />
                       ) : (
-                          <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: '#333', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Instagram size={24} /></div>
+                          <div className="w-16 h-16 rounded-full bg-zinc-800 flex items-center justify-center border-2 border-zinc-700">
+                              <Instagram size={24} className="text-zinc-500" />
+                          </div>
                       )}
                       
                       <div>
-                          <p style={{ fontWeight: 700, fontSize: '1.1rem' }}>@{instagramData.username}</p>
-                          <p style={{ color: '#a1a1aa', fontSize: '0.9rem' }}>Business Account</p>
+                          <p className="font-bold text-lg text-white">@{instagramData.username}</p>
+                          <p className="text-zinc-500 text-xs uppercase tracking-wider font-bold">Business Account</p>
                       </div>
                    </div>
 
-                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', marginBottom: '1.5rem' }}>
+                   <div className="grid grid-cols-3 gap-4 mb-8">
                       <StatBox label="Followers" value={instagramData.followers?.toLocaleString() || '-'} />
-                      <StatBox label="Media" value={instagramData.media_count?.toLocaleString() || '-'} />
+                      <StatBox label="Posts" value={instagramData.media_count?.toLocaleString() || '-'} />
                       <StatBox label="Reach" value={instagramData.reach?.toLocaleString() || '-'} />
                    </div>
 
-                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
+                   <div className="grid grid-cols-2 gap-3">
                     <button 
                         onClick={fetchInstagram}
                         disabled={loading}
-                        className="btn-secondary"
-                        style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem', alignItems: 'center' }}
+                        className="py-2.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-white font-medium text-sm transition-all flex items-center justify-center gap-2"
                     >
-                        <RefreshCw size={16} className={loading ? 'spin' : ''} />
+                        <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
                         Refresh
                     </button>
                     <button 
                         onClick={() => handleDisconnect('instagram')}
                         disabled={loading}
-                        className="btn-secondary"
-                        style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#fca5a5', border: '1px solid rgba(239, 68, 68, 0.2)', display: 'flex', justifyContent: 'center', gap: '0.5rem', alignItems: 'center' }}
+                        className="py-2.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 font-medium text-sm transition-all flex items-center justify-center gap-2"
                     >
-                        <Trash2 size={16} />
+                        <Trash2 size={14} />
                         Disconnect
                     </button>
                   </div>
                  </>
                ) : (
-                  <>
-                     <p style={{ color: '#a1a1aa', marginBottom: '1.5rem' }}>
-                       Connect your Instagram Business account to track followers, reach, and engagement.
-                     </p>
+                  <div className="min-h-[220px] flex flex-col justify-between">
+                     <div className="text-zinc-400 mb-8 space-y-2">
+                        <p>Connect your Instagram Professional account to track: </p>
+                        <ul className="text-sm space-y-1 list-disc list-inside text-zinc-500 ml-1">
+                            <li>Follower growth & demographics</li>
+                            <li>Post reach and engagement</li>
+                            <li>Viral content identification</li>
+                        </ul>
+                     </div>
                      <button 
                         onClick={handleInstagramConnect}
-                        className="btn-primary"
-                        style={{ background: 'linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%)', border: 'none', width: '100%' }}
+                        className="w-full py-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all shadow-lg hover:-translate-y-1 text-white bg-gradient-to-r from-orange-500 via-pink-500 to-purple-600 hover:from-orange-400 hover:to-purple-500 shadow-pink-500/20"
                      >
-                       Connect Instagram
+                       <Instagram size={20} /> Connect Instagram
                      </button>
-                     <p style={{ fontSize: '0.8rem', color: '#52525b', marginTop: '0.5rem', textAlign: 'center' }}>
-                         Requires an Instagram Business/Creator account linked to a Facebook Page.
-                     </p>
-                  </>
+                  </div>
                )}
             </div>
-          </div>
         </div>
       </div>
     </div>
@@ -289,9 +287,9 @@ export default function Connect() {
 
 function StatBox({ label, value }: { label: string, value: string | number }) {
   return (
-    <div style={{ background: 'rgba(255,255,255,0.03)', padding: '1rem', borderRadius: '0.5rem' }}>
-      <p style={{ fontSize: '0.75rem', color: '#a1a1aa', marginBottom: '0.25rem' }}>{label}</p>
-      <p style={{ fontSize: '1.1rem', fontWeight: 700 }}>{value}</p>
+    <div className="bg-zinc-900/50 border border-white/5 p-3 rounded-xl text-center">
+      <p className="text-[10px] text-zinc-500 uppercase font-bold tracking-wider mb-1">{label}</p>
+      <p className="text-lg font-bold text-white truncate">{value}</p>
     </div>
   );
 }

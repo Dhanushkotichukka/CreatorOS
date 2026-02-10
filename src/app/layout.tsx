@@ -1,5 +1,6 @@
 import './globals.css';
 import type { Metadata } from 'next';
+import { Toaster } from 'sonner';
 
 export const metadata: Metadata = {
   title: 'Creator Operating System',
@@ -30,7 +31,12 @@ export default function RootLayout({
               enableSystem
               disableTransitionOnChange
             >
-              {children}
+              <div className="flex h-screen overflow-hidden">
+                <main className="flex-1 overflow-y-auto bg-background">
+                  {children}
+                </main>
+              </div>
+              <Toaster position="bottom-right" theme="dark" />
             </ThemeProvider>
           </AuthProvider>
         </SessionProvider>
